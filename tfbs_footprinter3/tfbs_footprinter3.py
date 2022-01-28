@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Python vers. 3.8.0 ###########################################################
-__version__ = "0.0.1"
+__version__ = "0.0.3"
 
 
 # Libraries ####################################################################
@@ -544,13 +544,11 @@ def experimentalDataUpdater_beta():
         dump_json(current_versions_file, current_versions)
 
 
-def species_specific_data(target_species, chromosome, species_specific_data_dir, human_genome_version):
+def species_specific_data(target_species, chromosome, species_specific_data_dir):
     """
     Many datasets are species-specific.  If the current target species has species-specific datasets, load them.
     Altered to allow for multiple versions of data.  The matching files are sorted and those occuring later in the list, are presumably later editions.
     """
-
-    
 
     logging.info(" ".join(["Species-specific data: loading"]))
     # load GERP locations
@@ -770,7 +768,6 @@ def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_
             nuc_probability = (nuc_count + pseudo_count/4)/(N + pseudo_count)
             nuc_weight = math.log((nuc_probability/nuc_bg), 2)
             pwm[j].append(nuc_weight)
-##            ppm[j].append(nuc_probability)
         
     pwm = pwm[:]
 
@@ -781,63 +778,10 @@ def PWM_scorer(seq, pwm, pwm_dict, pwm_type):
     """
     Generate score for current seq given a pwm.
     """
-
-    # set relevant variables based on whether the pwm is mono or dinucleotide
-##    if pwm_type == "mono":
-##    motif_dist = len(seq)
-##    span = 1
-
-##    if pwm_type == "dinuc":
-##        motif_dist = len(seq) - 1
-##        span = 2
     
     seq_score = 0.0
     for i in range(0, len(seq)):
-##        seq_score += pwm[pwm_dict[seq[i:i+1]][i]]
         seq_score += pwm[pwm_dict[seq[i:i+1]]][i]
-##        nuc = seq[i:i+1]
-##        row = pwm_dict[nuc]
-##        score = pwm[row][i]
-##        seq_score += score
-        
-##    # account for sequences which are non-standard code    
-##    non_standard_dict = {'R':['A','G'],
-##                         'Y':['C','T'],
-##                         'S':['G','C'],
-##                         'W':['A','T'],
-##                         'K':['G','T'],
-##                         'M':['A','C'],
-##                         'B':['C','G','T'],
-##                         'D':['A','G','T'],
-##                         'H':['A','C','T'],
-##                         'V':['A','C','G'],
-##                         'B':['C','G','T']}
-##
-##    possible_seqs = []
-##    non_standards_in_seq = [x for x in non_standard_dict.keys() if x in seq]
-##    if len(non_standards_in_seq) > 0:
-##        for non_standard_in_seq in non_standards_in_seq:
-##            variant_chars = non_standard_dict[non_standard_in_seq]
-##            for variant_char in variant_chars:
-##                variant_seq = seq.replace(non_standard_in_seq, variant_char)
-##                possible_seqs.append(variant_seq)
-##    else:
-##        possible_seqs.append(seq)
-##    
-##    # iterate through candidate sequence, and score each mono or dinucleotide
-##    possible_seq_scores = []
-##    for possible_seq in possible_seqs:
-##        seq_score = 0.0
-##        for i in range(0, motif_dist):
-##            nuc = possible_seq[i:i+span]
-##            row = pwm_dict[nuc]
-##            score = pwm[row][i]
-##            seq_score += score
-##        possible_seq_scores.append(seq_score)
-##
-##    # use the best score achieved
-##    possible_seq_scores.sort()
-##    seq_score = possible_seq_scores[-1]
     
     return seq_score
 
@@ -880,12 +824,6 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
         # generate background frequencies of each mono-nucleotide for forward and reverse strands
         bg_nuc_freq_dict = {}
         neg_bg_nuc_freq_dict = {}
-
-        # Use empirical data from whole human genome, but limited to within -2000/+200 bp of TSSs
-        # http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0033204
-        # http://journals.plos.org/plosone/article/file?type=supplementary&id=info:doi/10.1371/journal.pone.0033204.s023
-    ##            bg_nuc_freq_dict = {'A':0.247, 'C':0.251, 'G':0.254, 'T':0.248}
-    ##            neg_bg_nuc_freq_dict = {'A':0.247, 'C':0.251, 'G':0.254, 'T':0.248}
 
         # https://arxiv.org/pdf/q-bio/0611041.pdf
         # empirical data from complete genome
@@ -936,8 +874,7 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                                 pval_index = bisect_left(scores_list_sorted, current_frame_score)
                                 if pval_index >= len(pvals_scores_list_sorted):
                                     pval_index = -1
-    ##                                elif pval_index == 0:
-    ##                                    pval_index == 0
+
                                 else:
                                     pval_index -= 1
 
@@ -952,23 +889,8 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                                 # identify position in alignment from start of found motif in unaligned sequence
                                 aligned_position = unaligned2aligned_index_dict[species][hit_loc_start]
 
-                                tfbss_found_dict[tf_name].append([current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue])
                                 # add to results dictionary by tf_name
-##                                if tf_name in tfbss_found_dict:
-##                                    tfbss_found_dict[tf_name].append([tf_name, species, current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue, aligned_position])
-##                                    tfbss_found_dict[tf_name].append([tf_name, current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue])
-##
-##                                else:
-##                                    tfbss_found_dict[tf_name] = [[tf_name, species, current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue, aligned_position]]
-##                                    tfbss_found_dict[tf_name] = [[tf_name, current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue]]
-        # sort results for each tf_name according to the position in alignment
-##        for tf_name, hits in tfbss_found_dict.iteritems():
-            # ref-point
-##            tfbss_found_dict[tf_name] = sorted(hits, key = itemgetter(10))
-##            tfbss_found_dict[tf_name] = sorted(hits, key = itemgetter(3))
-            
-##        # save the results to file
-##        dump_json(tfbss_found_dict_outfilename, tfbss_found_dict)
+                                tfbss_found_dict[tf_name].append([current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue])
 
     end_time = time.time()
     logging.info(" ".join(["total time for tfbs_finder() for this transcript:", str(end_time - start_time), "seconds"]))
@@ -1162,16 +1084,6 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
     eqtl_weights = []
 
     if len(converted_eqtls) > 0:        
-##        transcript_len  = float(chr_end - chr_start)
-
-        # Only needs to be calculated once, therefore break into new function (eqtl_overlap_likelihood) so that it is not performed for each of the TFBS predictions #
-        # Requires the tf_len, which will need to be stored in a dict instead of drawing it from the current hit in order to avoid repetition #
-        # determine size of search space, and probability of observing an eQTL in this gene.
-        # GTEx searches for variants which occur over the span of the gene + 1,000,000 nt upstream+downstream.
-##        eqtl_search_space = 2000000 + gene_len
-##        associated_gtx_eqtls = gtex_variants[ens_gene_id]
-##        variant_count = len(associated_gtx_eqtls) * 1.
-##        eqtl_occurrence_log_likelihood = -1 * math.log(((tf_len * variant_count)/(eqtl_search_space-tf_len)) * (transcript_len/gene_len), 2)
 
         # determine the weight score for likelihood of this magnitude eQTL.
         # ref-point
@@ -1184,7 +1096,6 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
             converted_eqtl_score_mag = abs(converted_eqtl[2])
 
             overlap = overlap_range([motif_start, motif_end], [converted_eqtl_start, converted_eqtl_end])
-##            if motif_start<=converted_eqtl_start<=motif_end or motif_start<=converted_eqtl_end<=motif_end:
 
             if len(overlap) > 0:
                 eqtl_weight = gtex_weights_dict[converted_eqtl_score_mag]
@@ -1195,7 +1106,6 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
     return eqtl_weights_sum
 
 
-##def cage_correlations_summing_preparation(transcript_id, cage_dict, TF_cage_dict, tf_name, jasparTFs_transcripts_dict):
 def cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, TF_cage_dict, tf_name):
     """
     Extract transcript relevant cages (target_cages) once for each TF under analysis.  This could be reduced,
@@ -1215,28 +1125,9 @@ def cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, T
     if tf_name in TF_cage_dict:
         tf_cages = [x[0].replace("hg_","").replace(".1","") for x in TF_cage_dict[tf_name]]
         
-
-##    # JASPAR tfs are often hetero multimers
-##    # therefore we should parse the individual proteins and identify transcripts for each
-##    split_tf_names = clean_jaspar_names([tf_name])
-##    tf_transcripts = []
-##    for split_tf_name in split_tf_names:
-##        if split_tf_name in jasparTFs_transcripts_dict:
-##            tf_transcripts += jasparTFs_transcripts_dict[split_tf_name]
-##
-##    # for each JASPAR transcript, compile associated FANTOM CAGEs
-##    for tf_transcript in tf_transcripts:
-##        tf_cages += cage_dict[tf_transcript]
-##
-##    # CAGEs may be shared by multiple transcripts with TSSs in close proximity
-##    tf_cages = list(set([x[0] for x in tf_cages]))
-
     return target_cages, tf_cages
 
 
-##def cage_correlations_summing(target_species_hit, transcript_id, target_cages, tf_cages, jasparTFs_transcripts_dict, cage_keys_dict, cage_correlations_dict, cage_corr_weights_dict, cage_correlations_hit_tf_dict):
-##def cage_correlations_summing(target_species_hit, transcript_id, target_cages, tf_cages, jasparTFs_transcripts_dict, cage_keys_dict, cage_correlations_dict, cage_corr_weights_dict):
-##def cage_correlations_summing(target_species_hit, transcript_id, target_cages, tf_cages, jasparTFs_transcripts_dict, cage_correlations_dict, cage_corr_weights_dict):
 def cage_correlations_summing(target_species_hit, transcript_id, target_cages, tf_cages, cage_correlations_dict, cage_corr_weights_dict):
     """
     Extract correlation values between CAGEs associated with a predicted TFBS protein,
@@ -1255,20 +1146,13 @@ def cage_correlations_summing(target_species_hit, transcript_id, target_cages, t
                 if tf_cage in cage_correlations_dict[target_cage]:
                     cage_correlation = cage_correlations_dict[target_cage][tf_cage]
                     cage_corr_weight = cage_corr_weights_dict[abs(cage_correlation)]        
-##                    corr_weight_sum += cage_corr_weight
                     corr_weights_ls.append(cage_corr_weight)
 
-##                    if target_cage_key in cage_correlations_dict[tf_cage_key]:
-##                        cage_correlation = cage_correlations_dict[tf_cage_key][target_cage_key]
-##                        cage_corr_weight = cage_corr_weights_dict[abs(cage_correlation)]
-##                        corr_weights_ls.append(cage_corr_weight)
-
+    # take strongest correlation weight score
     if len(corr_weights_ls) > 0:
         corr_weights_ls.sort()
         corr_weight_sum = corr_weights_ls[-1]
 
-##    cage_correlations_hit_tf_dict[tf_name] = corr_weight_sum
-##    return corr_weight_sum, cage_correlations_hit_tf_dict
     return corr_weight_sum
            
 
@@ -1283,7 +1167,6 @@ def cage_weights_summing(transcript_id, target_species_hit, cage_dist_weights_di
     for converted_cage in converted_cages:
         cage_peak_count_ratio = converted_cage[3]
         motif_cage_dist = str(distance_solve([converted_cage[0], converted_cage[1]], [target_species_hit[4], target_species_hit[5]]))
-##        motif_cage_dist = str(abs(distance_solve([converted_cage[0], converted_cage[1]], [target_species_hit[4], target_species_hit[5]])-21667))
         
         if motif_cage_dist in cage_dist_weights_dict:
             cage_weight = cage_dist_weights_dict[motif_cage_dist]
@@ -1373,7 +1256,6 @@ def gerp_weights_summing(target_species, transcript_id, chromosome, target_speci
         best_dist = dists[0]
 
         # should only overlap be used?
-##        if best_dist == 0:
         if best_dist <=1000:
             if target_species == "homo_sapiens":
                 if best_dist in gerp_conservation_weight_dict[chromosome][str(tf_len)]:
@@ -1413,6 +1295,7 @@ def cpg_weights_summing(transcript_id, target_species_hit, cpg_obsexp_weights_di
 
     else:
         return 0
+
 
 def clean_jaspar_names(uncleaned_jaspar_ids):
     """
@@ -1457,7 +1340,6 @@ def target_species_hits_table_writer(sorted_clusters_target_species_hits_list, o
     Write to table results sorted by combined affinity score.
     """
 
-##    with open(output_table_name, 'wb') as output_table:
     with open(output_table_name, 'w') as output_table:
         writerUS=csv.writer(output_table) 
         writerUS.writerow(['binding prot.', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value', 'combined\naffinity\nscore', 'combined\naffinity\nscore\np-value', 'species\nweights\nsum', 'cage\nweights\nsum', 'eqtls\nweights\nsum', 'atac\nweights\nsum', 'metacluster\nweights\nsum', 'cpg\nweight', 'corr.\nweight\nsum'])
@@ -1489,10 +1371,8 @@ def sort_target_species_hits(cluster_dict):
     for tf_name, hits in cluster_dict.items():
         for hit in hits:
             sorted_clusters_target_species_hits_list.append([tf_name]+hit)
-##            sorted_clusters_target_species_hits_list += hit
             
     # ref-point
-##    sorted_clusters_target_species_hits_list = sorted(sorted_clusters_target_species_hits_list, key=itemgetter(9), reverse = True)
     if len(sorted_clusters_target_species_hits_list) > 0:
         sorted_clusters_target_species_hits_list = sorted(sorted_clusters_target_species_hits_list, key=itemgetter(10), reverse = False)
     
@@ -1581,24 +1461,6 @@ def retrieve_genome_aligned(target_species, chromosome, strand, promoter_start, 
     exists with the target species group (e.g. mammals_low).  This may only exist at chr1:2000-9500.
     """
 
-##    # Retrieve alignment if alignment FASTA does not already exist  
-##    query_type = "/alignment/block/region/"
-##    pre_options = target_species + "/" + chromosome + ":" + str(promoter_start) + "-" + str(promoter_end) + ":" + str(strand)   
-##
-##    if coverage == "low":
-##        coverage_str = "EPO_LOW_COVERAGE"
-##    else:
-##        coverage_str = "EPO"
-##        
-##    options = pre_options + "?method=" + coverage_str + ";compact=1;content-type=application/json;species_set_group=" + species_group
-##    alignment_decoded = ensemblrest(query_type, options, 'json', "", log=True)
-##
-##    if 'error' not in alignment_decoded:            
-##        # remove those entries which are computed ancestral species
-##        alignment = [x for x in alignment_decoded[0]['alignments'] if 'Ancestor' not in x['seq_region']]
-##    else:
-##        logging.warning(" ".join([alignment_decoded['error']]))
-##        if alignment_decoded['error'].lower() == "no alignment available for this region":
     query_type = "/sequence/region/"
     pre_options = target_species + "/" + chromosome + ":" + str(promoter_start) + "-" + str(promoter_end) + ":" + str(strand)
     options = pre_options + "?content-type=application/json"
@@ -1621,7 +1483,6 @@ def fasta_writer(alignment, outfile):
     if not os.path.isfile(outfile) or (os.path.isfile(outfile) and os.path.getsize(outfile) == 0):
         with open(outfile, "w") as aligned_file:
             for entry in alignment:
-##                record = SeqRecord(Seq(entry['seq'], alphabet = IUPAC.ambiguous_dna), id = entry['species'], description = "")
                 record = SeqRecord(Seq(entry['seq']), id = entry['species'], description = "")
                 SeqIO.write(record, aligned_file, 'fasta')
 
@@ -1701,29 +1562,6 @@ def remove_duplicate_species(alignment, target_species):
     return non_duplicate_alignment
 
 
-##def selective_alignment(alignment):
-##    """
-##    Remove sequences from the alignment if they have less then 75% of the nucleotides of the target_species sequence.
-##    Work needed: identify scenarios where length of target sequence affects alignment and subsequent scoring.
-##    """
-##
-##    target_species_entry = alignment[0]
-##    target_species_seq_2nd_half = target_species_entry['seq'][len(target_species_entry['seq'])/2:]
-##    target_species_seq_2nd_half = target_species_seq_2nd_half.replace("-","").replace("N","").replace(" ","").replace(".","")
-##    target_species_seq_2nd_half_len = len(target_species_seq_2nd_half)
-##
-##    cleaned_alignment = []
-##    if target_species_seq_2nd_half_len > 0:
-##        for entry in alignment:
-##            entry_seq_2nd_half = entry['seq'][len(entry['seq'])/2:]
-##            entry_seq_2nd_half = entry_seq_2nd_half.replace("-","").replace("N","").replace(" ","").replace(".","")      
-##            entry_seq_2nd_half_len = len(entry_seq_2nd_half)
-##            if float(entry_seq_2nd_half_len)/target_species_seq_2nd_half_len >= 0.75:
-##                cleaned_alignment.append(entry)
-##
-##    return cleaned_alignment
-
-
 def load_genome_aligned(aligned_filename):    
     """
     Load previously retrieved alignment fasta file into dictionary.
@@ -1754,8 +1592,6 @@ def alignment_tools(ensembl_aligned_filename, cleaned_aligned_filename, target_s
             alignment = load_genome_aligned(ensembl_aligned_filename)
             alignment = remove_non_ACGT(alignment)
             alignment = remove_duplicate_species(alignment, target_species)
-##            # analysis is now based on conservation around individual hits, so removing sequences based on completeness is wasteful
-##            alignment = selective_alignment(alignment)
             alignment = remove_gap_only(alignment)
             fasta_writer(alignment, cleaned_aligned_filename)
 
@@ -1841,7 +1677,6 @@ def transcript_data_retrieve(decoded_json_description, transcript_dict_filename,
     if 'display_name' in decoded_json_description:
         transcript_name = decoded_json_description['display_name']
     else:
-##        transcript_name = ""
         transcript_name = "-".join([ens_gene_id, decoded_id])
     dump_json(transcript_dict_filename, decoded_json_description)
 
@@ -1868,11 +1703,8 @@ def gene_data_retrieve(gene_dict_filename, ens_gene_id):
     # determine likelihood of overlapping an eQTL at all.
     # Set parameters for retrieving Ensembl data via REST
 
-##    if os.path.exists(gene_dict_filename):      
     decoded_json_description = load_json(gene_dict_filename)
 
-
-##    else:
     if not decoded_json_description or len(decoded_json_description)==0:
         query_type = '/lookup/id/'
         options = '?feature=transcript;content-type=application/json'
@@ -1892,8 +1724,8 @@ def gene_data_retrieve(gene_dict_filename, ens_gene_id):
 
     gene_len = gene_end - gene_start
 
-
     return gene_name, gene_len
+
 
 ################################################################################
 # Regulatory & Conservation Features ###########################################
@@ -1970,31 +1802,6 @@ def reg_position_translate(tss,regulatory_decoded,promoter_start,promoter_end,st
     return converted_reg_dict
 
 
-##def alignment_conservation(aligned_filename):
-##    """
-##    Identify basic conservation of DNA sequence in the alignment.
-##    """
-##
-##    alignment = AlignIO.read(aligned_filename, "fasta")
-##    target_species_row = alignment[0]
-##    species_num = float(len(alignment))
-##    conservation = []
-##    for i in range(0, len(target_species_row)):
-##        
-##        target_species_nuc = target_species_row[i]
-##        if target_species_nuc != "-":
-##            alignment_col = alignment[:,i]
-##            common_char = collections.Counter(alignment_col).most_common()[0][0]
-##            char_count = collections.Counter(alignment_col).most_common()[0][1]
-##            if common_char != '-':
-##                col_conservation = char_count/species_num
-##            else:
-##                col_conservation = alignment_col.count(target_species_nuc)/species_num
-##            conservation.append(col_conservation)
-##
-##    return conservation
-
-
 def CpG(aligned_filename):
     """
     Score the CpG content of the target_species sequence over a 200 nt window.
@@ -2033,10 +1840,6 @@ def CpG(aligned_filename):
         else:
             rolling_island = cpg_list[i-100:i+100]
 
-##        Cs = sum([x[0] for x in rolling_island]) * 1.0
-##        Gs = sum([x[1] for x in rolling_island]) * 1.0
-##        CorG_ratio = (Cs+Gs)/len(rolling_island)
-##        num_cpg = sum([x[2] for x in rolling_island]) * 1.0
         Cs = sum(x[0] for x in rolling_island) * 1.0
         Gs = sum(x[1] for x in rolling_island) * 1.0
         CorG_ratio = (Cs+Gs)/len(rolling_island)
@@ -2062,16 +1865,11 @@ def cage_position_translate(gene_name,transcript_id,tss,cage_dict,promoter_start
     
     if gene_name in cage_dict:
         cages = cage_dict[gene_name]
-##        cages_peak_count_sum = float(sum([int(x[5]) for x in cages]))
         cages_peak_count_sum = float(sum(int(x[5]) for x in cages))
         
         for cage in cages:
-        # old
-##            cage_strand = cage[2]
-##            cage_start = cage[3]
-##            cage_end = cage[4]
-##            cage_desc = cage[6]
 
+            #ref-point
             cage_desc = cage[1]
             cage_start = int(cage[3])
             cage_end = cage_start + int(cage[4])
@@ -2117,9 +1915,6 @@ def gtex_position_translate(ens_gene_id,gtex_variants,tss,promoter_start,promote
                 eqtl_length = eqtl[1]
                 eqtl_effect = eqtl[2]
 
-##            overlap = overlap_range([promoter_start, promoter_end], [loc, loc+eqtl_length])
-            
-##            if len(overlap) >0:
             if promoter_start<=loc<=promoter_end or promoter_start<=loc+eqtl_length<=promoter_end:
                 #[promoter_start][eqtl_start][eqtl_end][promoter_end][chr_start][TSS>GENE--->][chr_end]
                 if strand == 1:
@@ -2170,15 +1965,8 @@ def gerp_positions_translate(target_dir, gerp_conservation_locations_dict, chrom
     extended_range = 1000
     
     if chromosome in gerp_conservation_locations_dict:
-##        left_most_index = bisect_left([x[0] for x in gerp_conservation_locations_dict[chromosome]], promoter_start - extended_range)
-##        right_most_index = bisect_right([x[0]+x[1] for x in gerp_conservation_locations_dict[chromosome]], promoter_end + extended_range)
-                
-##        potential_gerps_in_promoter = gerp_conservation_locations_dict[chromosome][left_most_index-1:right_most_index+1]
         for potential_gerp_in_promoter in gerp_conservation_locations_dict[chromosome]:
-##        for potential_gerp_in_promoter in potential_gerps_in_promoter:
-##            overlap = overlap_range([promoter_start - extended_range, promoter_end + extended_range], [potential_gerp_in_promoter[0], potential_gerp_in_promoter[0]+potential_gerp_in_promoter[1]])
             if promoter_start - extended_range<=potential_gerp_in_promoter[0]<=promoter_end + extended_range or promoter_start - extended_range<=potential_gerp_in_promoter[0]+potential_gerp_in_promoter[1]<=promoter_end + extended_range:
-##            if len(overlap) > 0:
                 gerps_in_promoter.append(potential_gerp_in_promoter)
              
 
@@ -2245,8 +2033,7 @@ def gtrd_positions_translate(target_dir, gtrd_metaclusters_dict, chromosome, str
 
     # convert the positions of the in-promoter metaclusters to tss-relative
     converted_metaclusters_in_promoter = []
-##    gtrd_outfilename = os.path.join(target_dir, os.path.basename(target_dir) + '.gtrd.txt')
-##    with open(gtrd_outfilename, 'w') as gtrd_outfile:
+
     for metacluster_in_promoter in metaclusters_in_promoter:
         metacluster_start = metacluster_in_promoter[0]
         metacluster_end = metacluster_start + metacluster_in_promoter[1]
@@ -2337,6 +2124,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     ['binding_prot', 'species', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value', 'pos in align.', 'combined affinity score', 'support']
     """
 
+    # set axes for human
     if target_species == "homo_sapiens":
         fig = plt.figure(figsize=(10, 6))
         ax1 = plt.subplot2grid((20,1),(0,0), rowspan = 6, colspan = 11)
@@ -2394,7 +2182,8 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
 
     # plot title
     title_str = target_species+"\n"+" ".join([transcript_name, transcript_id])
-    fig.text(0.065, 0.5, title_str, horizontalalignment='center', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=14)
+##    fig.text(0.065, 0.5, title_str, horizontalalignment='center', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=14)
+    fig.text(0.065, 0.5, title_str, horizontalalignment='center', verticalalignment='center', rotation='vertical', fontsize=14)
     mpl.rcParams['axes.linewidth'] = 1.1
     plt.xlabel("Nucleotide position relative to TSS", labelpad=5)
     
@@ -2408,13 +2197,11 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     sorted_by_ca_list = []
     for TF, great_hits in top_x_greatest_hits_dict.items():
         for great_hit in great_hits:
-##            great_hit[10] = float(great_hit[10])
             sorted_by_ca_list.append(great_hit)
+
     # ref-point
-##    sorted_by_ca_list = sorted(sorted_by_ca_list, key=itemgetter(9), reverse=True)
     sorted_by_ca_list = sorted(sorted_by_ca_list, key=itemgetter(10)) # sort by combined affinity p-val
     
-
     ### AX1: Predicted TFBSs
     for sorted_great_hit in sorted_by_ca_list:
 
@@ -2442,10 +2229,6 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         y_series = []
 
         # ref-point
-##        binding_site_start = sorted_great_hit[6]
-##        binding_site_end = sorted_great_hit[7]
-##        combined_affinity = sorted_great_hit[12]
-##        binding_strand = int(sorted_great_hit[3])
         #'binding prot.', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'frame score', 'p-value', 'combined\naffinity\nscore', 'species\nweights\nsum', 'cage\nweights\nsum', 'eqtls\nweights\nsum', 'atac\nweights\nsum', 'metacluster\nweights\nsum', 'cpg\nweight', 'corr.\nweight\nsum']
         binding_site_start = sorted_great_hit[5]
         binding_site_end = sorted_great_hit[6]
@@ -2467,7 +2250,6 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     # All will be horizontally plotted in some shade of red
     if len(converted_reg_dict) > 0:
         alpha_gradient = 1.0
-##        alpha_gradient_dict = {1:0, 2:0.5, 3:0.25, 4:0.225}
         alpha_gradient_dict = {1:0}
         for i in range(2,100):
             alpha_gradient_dict[i] = 1./i
@@ -2511,13 +2293,11 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     ax2.set_yticks([0, 1])
     plt.setp(ax2.get_yticklabels(), fontsize=6)
     ax2.set_ylim(0, 1)
-
     
     ### AX3: CpG plot
     # [1 C, 1 if G, 1 if CPG, CorG, num_cpg, obs2exp]
     obs2exp = [x[5] for x in cpg_list]
     ax3.plot(range(-1 * alignment_len + promoter_after_tss, promoter_after_tss), obs2exp, color = 'red')
-##    gpc = [x[2] for x in cpg_list]
     gpc = []
     top_obs2exp = ax3.get_ylim()[-1]
     
@@ -2633,9 +2413,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         ### AX8: cage_correlations
         # rebuild dict to have just the top correlation
         # ref-point
-##        plot_tfs_corrs_colors = [(tf_name, cage_correlations_hit_tf_dict[tf_name], color_dict[tf_name]) if tf_name in cage_correlations_hit_tf_dict else (tf_name, 0, color_dict[tf_name]) for tf_name in top_x_greatest_hits_dict]
-        plot_tfs_corrs_colors = [(tf_name, hits_list[0][16],  color_dict[tf_name]) for tf_name, hits_list in top_x_greatest_hits_dict.items()]
-                                 
+        plot_tfs_corrs_colors = [(tf_name, hits_list[0][16],  color_dict[tf_name]) for tf_name, hits_list in top_x_greatest_hits_dict.items()]                                 
         plot_tfs_corrs_colors_sorted = sorted(plot_tfs_corrs_colors, key=itemgetter(1), reverse=True)
         ax8.bar(range(0, len(plot_tfs_corrs_colors_sorted)), [x[1] for x in plot_tfs_corrs_colors_sorted], color=[x[2] for x in plot_tfs_corrs_colors_sorted], edgecolor = "none")
         ax8.set_ylim(0, plot_tfs_corrs_colors_sorted[0][1]+1)
@@ -2654,11 +2432,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     else:
         ax1.set_yticks(range(-1 * (((tens_y*10)/100)+1)*100, (((tens_y*10)/100)+2)*100, 100))
 
-##    if y_range[-1] <= 50:
-##        ax1.set_yticks(range(-50, 50+1, 10))
-##    else:
-##        ax1.set_yticks(range(-1 * (((tens_y*10)/100)+1)*100, (((tens_y*10)/100)+2)*100, 100))
-
+    # format y-labels
     ylabs=ax1.get_yticks().tolist()
     ylabs=[abs(x) for x in ylabs]
     ax1.set_yticklabels(ylabs)
@@ -2685,7 +2459,6 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
 ##    ax3.set_xticks(range(-1 * promoter_before_tss, promoter_after_tss + 1, xtick_jump))
 
 
-##def plot_promoter(target_species, transcript_id, species_group, alignment, alignment_len, promoter_before_tss, promoter_after_tss, transcript_name, top_x_greatest_hits_dict, target_dir, converted_reg_dict, converted_gerps_in_promoter, cpg_list, converted_cages, converted_metaclusters_in_promoter, converted_atac_seqs_in_promoter, converted_eqtls, cage_correlations_hit_tf_dict):
 def plot_promoter_all(target_species, transcript_id, species_group, alignment, alignment_len, promoter_before_tss, promoter_after_tss, transcript_name, top_x_greatest_hits_dict, target_dir, converted_reg_dict, converted_gerps_in_promoter, cpg_list, converted_cages, converted_metaclusters_in_promoter, converted_atac_seqs_in_promoter, converted_eqtls):
     """
     Plot the predicted TFBSs, onto a 5000 nt promoter graph, which possess support above the current strand threshold.
@@ -2749,7 +2522,7 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
 
     # plot title
     title_str = target_species+"\n"+" ".join([transcript_name, transcript_id])
-    fig.text(0.065, 0.5, title_str, horizontalalignment='center', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=14)
+    fig.text(0.065, 0.5, title_str, horizontalalignment='center', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=14)    
     mpl.rcParams['axes.linewidth'] = 1.1
     plt.xlabel("Nucleotide position relative to TSS", labelpad=5)
     
@@ -2795,10 +2568,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         y_series = []
 
         # ref-point
-##        binding_site_start = sorted_great_hit[6]
-##        binding_site_end = sorted_great_hit[7]
-##        combined_affinity = sorted_great_hit[12]
-##        binding_strand = int(sorted_great_hit[3])
         #'binding prot.', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'frame score', 'p-value', 'combined\naffinity\nscore', 'species\nweights\nsum', 'cage\nweights\nsum', 'eqtls\nweights\nsum', 'atac\nweights\nsum', 'metacluster\nweights\nsum', 'cpg\nweight', 'corr.\nweight\nsum']
         binding_site_start = sorted_great_hit[5]
         binding_site_end = sorted_great_hit[6]
@@ -2820,7 +2589,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
     # All will be horizontally plotted in some shade of red
     if len(converted_reg_dict) > 0:
         alpha_gradient = 1.0
-##        alpha_gradient_dict = {1:0, 2:0.5, 3:0.25, 4:0.225}
         alpha_gradient_dict = {1:0}
         for i in range(2,100):
             alpha_gradient_dict[i] = 1./i
@@ -2871,7 +2639,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
     # [1 C, 1 if G, 1 if CPG, CorG, num_cpg, obs2exp]
     obs2exp = [x[5] for x in cpg_list]
     ax3.plot(range(-1 * alignment_len + promoter_after_tss, promoter_after_tss), obs2exp, color = 'red')
-##    gpc = [x[2] for x in cpg_list]
     gpc = []
     top_obs2exp = ax3.get_ylim()[-1]
     
@@ -2985,20 +2752,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         plt.setp(ax4.get_yticklabels(), fontsize=6)
         ax4.axhline(0.0, color = 'black', alpha = 0.4)
 
-        ### AX8: cage_correlations
-        # rebuild dict to have just the top correlation
-        # ref-point
-##        plot_tfs_corrs_colors = [(tf_name, cage_correlations_hit_tf_dict[tf_name], color_dict[tf_name]) if tf_name in cage_correlations_hit_tf_dict else (tf_name, 0, color_dict[tf_name]) for tf_name in top_x_greatest_hits_dict]
-##        plot_tfs_corrs_colors = [(tf_name, hits_list[0][16],  color_dict[tf_name]) for tf_name, hits_list in top_x_greatest_hits_dict.iteritems()]
-                                 
-##        plot_tfs_corrs_colors_sorted = sorted(plot_tfs_corrs_colors, key=itemgetter(1), reverse=True)
-##        ax8.bar(range(0, len(plot_tfs_corrs_colors_sorted)), [x[1] for x in plot_tfs_corrs_colors_sorted], color=[x[2] for x in plot_tfs_corrs_colors_sorted], edgecolor = "none")
-##        ax8.set_ylim(0, plot_tfs_corrs_colors_sorted[0][1]+1)
-##        ax8.set_xlim(-1, len(top_x_greatest_hits_dict))
-##        ax8.set_yticks([0, math.ceil(plot_tfs_corrs_colors_sorted[0][1])+1])
-##        plt.setp(ax8.get_yticklabels(), fontsize=6)   
-
-
     ## set ticks
     # based on 100's
     if y_range[-1] <= 100:
@@ -3008,11 +2761,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         ax1.set_yticks(range(-1* y_thresh, y_thresh+1, 10))
     else:
         ax1.set_yticks(range(-1 * (((tens_y*10)/100)+1)*100, (((tens_y*10)/100)+2)*100, 100))
-
-##    if y_range[-1] <= 50:
-##        ax1.set_yticks(range(-50, 50+1, 10))
-##    else:
-##        ax1.set_yticks(range(-1 * (((tens_y*10)/100)+1)*100, (((tens_y*10)/100)+2)*100, 100))
 
     ylabs=ax1.get_yticks().tolist()
     ylabs=[abs(x) for x in ylabs]
@@ -3024,7 +2772,6 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
 
     # legend
     num_cols = 6
-##    ax1.legend(bbox_to_anchor=[0., 1.1, 1.0, .102], loc='center', ncol=num_cols, prop={'size':8}, mode="expand", borderaxespad=0.)
                       
     # produce .svg figure
     plt.subplots_adjust(hspace=0.40)

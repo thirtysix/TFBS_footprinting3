@@ -40,7 +40,8 @@ In order to incorporate several of the experimental datapoints, and for ease of 
 ## 2.1 Conda installation (recommended)
 
 The TFBS_footprinting package can be installed directly to your linux system using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
-`conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
+
+`$conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
 
 ## 2.2 Pypi installation
 

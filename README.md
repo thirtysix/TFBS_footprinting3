@@ -37,13 +37,18 @@ In order to incorporate several of the experimental datapoints, and for ease of 
 
 # 2. Installation
 
-## 2.1 Pypi installation
+## 2.1 Conda installation (recommended)
+
+The TFBS_footprinting package can be installed directly to your linux system using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
+`conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
+
+## 2.2 Pypi installation
 
 The TFBS_footprinting package can be installed directly to your linux system using [PIP](https://pip.pypa.io/en/stable/installing/) install.
 
 `$ pip install tfbs_footprinting3`
 
-## 2.2 Docker installation
+## 2.3 Docker installation
 
 TFBS_footprinting is now available in a [Docker image](https://hub.docker.com/r/thirtysix/tfbs_footprinting/) which already contains all of the software requirements. This can be used on both Linux and Windows systems.
 
@@ -51,9 +56,9 @@ TFBS_footprinting is now available in a [Docker image](https://hub.docker.com/r/
 
 The Docker installation will have a default RAM allocation that is too low (\~2GB) to run TFBS_footprinting. This setting should be changed to \>6144MB. In Windows this can be adjusted by navigating through: Docker system tray icon\>Settings\>Advanced\>Memory. After changing this value, Docker will restart, which could take several minutes.
 
-## 2.3 Requirements
+## 2.4 Requirements
 
-These requirements are automatically installed by the PIP installer, and are already present in the Docker image:
+These requirements are automatically installed by Conda and the PIP installer, and are already present in the Docker image:
 -   biopython
 -   numpy
 -   matplotlib

@@ -6,8 +6,9 @@ Additional documentation available at
 
 [1. Introduction](https://github.com/thirtysix/TFBS_footprinting3#1-introduction)
 -   [1.1 Basics](https://github.com/thirtysix/TFBS_footprinting3#11-basics)
--   [1.2 Experimental data](https://github.com/thirtysix/TFBS_footprinting3#12-experimental-data)
--   [1.3 Ensembl transcript-ids](https://github.com/thirtysix/TFBS_footprinting3#13-ensembl-transcript-ids)
+-   [1.2 Ensembl available species](https://github.com/thirtysix/TFBS_footprinting3#11-ensembl-available-species)
+-   [1.3 Experimental data](https://github.com/thirtysix/TFBS_footprinting3#13-experimental-data)
+-   [1.4 Ensembl transcript-ids](https://github.com/thirtysix/TFBS_footprinting3#14-ensembl-transcript-ids)
 
 [2. Installation](https://github.com/thirtysix/TFBS_footprinting3#2-installation)
 -   [2.1 Conda installation](https://github.com/thirtysix/TFBS_footprinting3#21-conda-installation-recommended)
@@ -35,11 +36,10 @@ Additional documentation available at
 [7. Process](https://github.com/thirtysix/TFBS_footprinting3#7--process)
 -   [7.1 Steps](https://github.com/thirtysix/TFBS_footprinting3#71-steps)
 
-[8. Ensembl available species](https://github.com/thirtysix/TFBS_footprinting3#8-ensembl-available-species)
 
-[9. Troubleshooting](https://github.com/thirtysix/TFBS_footprinting3#9-troubleshooting)
--   [9.1 Log file](https://github.com/thirtysix/TFBS_footprinting3#91-log-file)
--   [9.2 Docker](https://github.com/thirtysix/TFBS_footprinting3#92-docker)
+[8. Troubleshooting](https://github.com/thirtysix/TFBS_footprinting3#8-troubleshooting)
+-   [8.1 Log file](https://github.com/thirtysix/TFBS_footprinting3#81-log-file)
+-   [8.2 Docker](https://github.com/thirtysix/TFBS_footprinting3#92-docker)
 
 
 
@@ -54,7 +54,54 @@ Additional documentation available at
 * * *
 
 
-## 1.2 Experimental data
+# 1.2 Ensembl available species
+**Table of species which can be analyzed by tfbs_footprinter3 at this time**
+
+|A-F                         |G-M                         |N-P                           |Q-Z                            |
+|----------------------------|----------------------------|------------------------------|-------------------------------|
+|acanthochromis polyacanthus |gadus morhua                |nannospalax galili            |rattus norvegicus              |
+|ailuropoda melanoleuca      |gallus gallus               |neolamprologus brichardi      |rhinopithecus bieti            |
+|amphilophus citrinellus     |gambusia affinis            |nomascus leucogenys           |rhinopithecus roxellana        |
+|amphiprion ocellaris        |gasterosteus aculeatus      |ochotona princeps             |saimiri boliviensis boliviensis|
+|amphiprion percula          |gorilla gorilla             |octodon degus                 |scleropages formosus           |
+|anabas testudineus          |haplochromis burtoni        |oreochromis niloticus         |scophthalmus maximus           |
+|anas platyrhynchos          |heterocephalus glaber female|oryctolagus cuniculus         |seriola dumerili               |
+|anolis carolinensis         |heterocephalus glaber male  |oryzias latipes hni           |seriola lalandi dorsalis       |
+|aotus nancymaae             |hippocampus comes           |oryzias latipes hsok          |sorex araneus                  |
+|astatotilapia calliptera    |homo sapiens                |oryzias latipes               |stegastes partitus             |
+|astyanax mexicanus          |ictalurus punctatus         |oryzias melastigma            |sus scrofa                     |
+|bos taurus                  |ictidomys tridecemlineatus  |otolemur garnettii            |taeniopygia guttata            |
+|callithrix jacchus          |jaculus jaculus             |ovis aries                    |takifugu rubripes              |
+|canis familiaris            |kryptolebias marmoratus     |pan paniscus                  |tetraodon nigroviridis         |
+|capra hircus                |labrus bergylta             |pan troglodytes               |tupaia belangeri               |
+|carlito syrichta            |lepisosteus oculatus        |panthera pardus               |tursiops truncatus             |
+|cavia aperea                |loxodonta africana          |panthera tigris altaica       |vicugna pacos                  |
+|cavia porcellus             |macaca fascicularis         |papio anubis                  |xiphophorus couchianus         |
+|cebus capucinus             |macaca mulatta              |paramormyrops kingsleyae      |xiphophorus maculatus          |
+|cercocebus atys             |macaca nemestrina           |pelodiscus sinensis           |                               |
+|chinchilla lanigera         |mandrillus leucophaeus      |periophthalmus magnuspinnatus |                               |
+|chlorocebus sabaeus         |mastacembelus armatus       |peromyscus maniculatus bairdii|                               |
+|choloepus hoffmanni         |maylandia zebra             |poecilia formosa              |                               |
+|colobus angolensis palliatus|meleagris gallopavo         |poecilia latipinna            |                               |
+|cricetulus griseus chok1gshd|mesocricetus auratus        |poecilia mexicana             |                               |
+|cricetulus griseus crigri   |microcebus murinus          |poecilia reticulata           |                               |
+|cynoglossus semilaevis      |microtus ochrogaster        |pongo abelii                  |                               |
+|cyprinodon variegatus       |mola mola                   |procavia capensis             |                               |
+|danio rerio                 |monopterus albus            |propithecus coquereli         |                               |
+|dasypus novemcinctus        |mus caroli                  |pteropus vampyrus             |                               |
+|dipodomys ordii             |mus musculus                |pundamilia nyererei           |                               |
+|echinops telfairi           |mus pahari                  |pygocentrus nattereri         |                               |
+|equus caballus              |mus spretus                 |                              |                               |
+|erinaceus europaeus         |mustela putorius furo       |                              |                               |
+|esox lucius                 |myotis lucifugus            |                              |                               |
+|felis catus                 |                            |                              |                               |
+|ficedula albicollis         |                            |                              |                               |
+|fukomys damarensis          |                            |                              |                               |
+|fundulus heteroclitus       |                            |                              |                               |
+
+
+
+## 1.3 Experimental data
 
 The TFBS footprinting method computationally predicts transcription factor binding sites (TFBSs) in a target species (e.g., homo sapiens, chimpanzee, mouse, zebrafish, etc.) using 575 position weight matrices (PWMs) based on binding data from the JASPAR database. Additional experimental data from a variety of sources is used to support or detract from these predictions:
 
@@ -68,7 +115,7 @@ The TFBS footprinting method computationally predicts transcription factor bindi
 -   proximity to CpGs
 -   proximity to ATAC-Seq peaks (ENCODE project)
 
-## 1.3 Ensembl transcript-ids
+## 1.4 Ensembl transcript-ids
 
 In order to incorporate several of the experimental datapoints, and for ease of use, the Ensembl transcript ID was chosen as the primary identifier around which TFBS_footprinting analyses would revolve. This allows users to predict TFBSs in the promoters any of 1-80,000 human protein coding transcripts in the Ensembl database, and incorporate expression data from the FANTOM project, and eQTLS from the GTEx project, which has been assigned to these IDs. TFBS predictions can also be made for 123 unique non-human species (including model organisms such as mouse and zebrafish).
 
@@ -319,54 +366,7 @@ Don't output a figure.
 
 
 
-# 8. Ensembl available species
-**Table of species which can be analyzed by tfbs_footprinter3 at this time**
-
-|A-F                         |G-M                         |N-P                           |Q-Z                            |
-|----------------------------|----------------------------|------------------------------|-------------------------------|
-|acanthochromis polyacanthus |gadus morhua                |nannospalax galili            |rattus norvegicus              |
-|ailuropoda melanoleuca      |gallus gallus               |neolamprologus brichardi      |rhinopithecus bieti            |
-|amphilophus citrinellus     |gambusia affinis            |nomascus leucogenys           |rhinopithecus roxellana        |
-|amphiprion ocellaris        |gasterosteus aculeatus      |ochotona princeps             |saimiri boliviensis boliviensis|
-|amphiprion percula          |gorilla gorilla             |octodon degus                 |scleropages formosus           |
-|anabas testudineus          |haplochromis burtoni        |oreochromis niloticus         |scophthalmus maximus           |
-|anas platyrhynchos          |heterocephalus glaber female|oryctolagus cuniculus         |seriola dumerili               |
-|anolis carolinensis         |heterocephalus glaber male  |oryzias latipes hni           |seriola lalandi dorsalis       |
-|aotus nancymaae             |hippocampus comes           |oryzias latipes hsok          |sorex araneus                  |
-|astatotilapia calliptera    |homo sapiens                |oryzias latipes               |stegastes partitus             |
-|astyanax mexicanus          |ictalurus punctatus         |oryzias melastigma            |sus scrofa                     |
-|bos taurus                  |ictidomys tridecemlineatus  |otolemur garnettii            |taeniopygia guttata            |
-|callithrix jacchus          |jaculus jaculus             |ovis aries                    |takifugu rubripes              |
-|canis familiaris            |kryptolebias marmoratus     |pan paniscus                  |tetraodon nigroviridis         |
-|capra hircus                |labrus bergylta             |pan troglodytes               |tupaia belangeri               |
-|carlito syrichta            |lepisosteus oculatus        |panthera pardus               |tursiops truncatus             |
-|cavia aperea                |loxodonta africana          |panthera tigris altaica       |vicugna pacos                  |
-|cavia porcellus             |macaca fascicularis         |papio anubis                  |xiphophorus couchianus         |
-|cebus capucinus             |macaca mulatta              |paramormyrops kingsleyae      |xiphophorus maculatus          |
-|cercocebus atys             |macaca nemestrina           |pelodiscus sinensis           |                               |
-|chinchilla lanigera         |mandrillus leucophaeus      |periophthalmus magnuspinnatus |                               |
-|chlorocebus sabaeus         |mastacembelus armatus       |peromyscus maniculatus bairdii|                               |
-|choloepus hoffmanni         |maylandia zebra             |poecilia formosa              |                               |
-|colobus angolensis palliatus|meleagris gallopavo         |poecilia latipinna            |                               |
-|cricetulus griseus chok1gshd|mesocricetus auratus        |poecilia mexicana             |                               |
-|cricetulus griseus crigri   |microcebus murinus          |poecilia reticulata           |                               |
-|cynoglossus semilaevis      |microtus ochrogaster        |pongo abelii                  |                               |
-|cyprinodon variegatus       |mola mola                   |procavia capensis             |                               |
-|danio rerio                 |monopterus albus            |propithecus coquereli         |                               |
-|dasypus novemcinctus        |mus caroli                  |pteropus vampyrus             |                               |
-|dipodomys ordii             |mus musculus                |pundamilia nyererei           |                               |
-|echinops telfairi           |mus pahari                  |pygocentrus nattereri         |                               |
-|equus caballus              |mus spretus                 |                              |                               |
-|erinaceus europaeus         |mustela putorius furo       |                              |                               |
-|esox lucius                 |myotis lucifugus            |                              |                               |
-|felis catus                 |                            |                              |                               |
-|ficedula albicollis         |                            |                              |                               |
-|fukomys damarensis          |                            |                              |                               |
-|fundulus heteroclitus       |                            |                              |                               |
-
-
-
-# 9. Troubleshooting
+# 8. Troubleshooting
 
 ## 9.1 Log file
 

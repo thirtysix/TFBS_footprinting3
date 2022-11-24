@@ -6,7 +6,7 @@ Additional documentation available at
 
 [1. Introduction](https://github.com/thirtysix/TFBS_footprinting3#1-introduction)
 -   [1.1 Basics](https://github.com/thirtysix/TFBS_footprinting3#11-basics)
--   [1.2 Ensembl available species](https://github.com/thirtysix/TFBS_footprinting3#11-ensembl-available-species)
+-   [1.2 Ensembl available species](https://github.com/thirtysix/TFBS_footprinting3#12-ensembl-available-species)
 -   [1.3 Experimental data](https://github.com/thirtysix/TFBS_footprinting3#13-experimental-data)
 -   [1.4 Ensembl transcript-ids](https://github.com/thirtysix/TFBS_footprinting3#14-ensembl-transcript-ids)
 

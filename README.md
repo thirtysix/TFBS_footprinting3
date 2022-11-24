@@ -1,5 +1,5 @@
 
-Full documentation available at
+Additional documentation available at
 [tfbs-footprinting.readthedocs.io](tfbs-footprinting.readthedocs.io)
 
 # 0. Summary

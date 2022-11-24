@@ -54,7 +54,7 @@ Additional documentation available at
 * * *
 
 
-# 1.2 Ensembl available species
+## 1.2 Ensembl available species
 **Table of species which can be analyzed by tfbs_footprinter3 at this time**
 
 |A-F                         |G-M                         |N-P                           |Q-Z                            |

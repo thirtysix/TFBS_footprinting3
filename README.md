@@ -396,5 +396,3 @@ In Windows this can be adjusted by navigating through:
 
 After changing this value Docker will restart, which could take several minutes. If the allocated memory is too low, then the Docker image will terminate and you will see the `$ killed` message in the console.
 
-
-# 10. Example run

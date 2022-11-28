@@ -134,6 +134,7 @@ The TFBS_footprinting package can be installed directly to your linux system usi
 `$ conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
 
 Install wget with pip:
+
 `$ pip install wget`
 
 ## 2.2 Pypi installation

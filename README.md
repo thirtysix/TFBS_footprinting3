@@ -122,7 +122,7 @@ In order to incorporate several of the experimental datapoints, and for ease of 
 
 # 2. Installation
 
-A video tutorial on how to install the TFBS_footprinting tool is available here:
+A video tutorial on how to install the TFBS_footprinting tool and run sample analyses is available here:
 [Installation Tutorial](https://www.youtube.com/watch?v=tJaLHKIhksU)
 ![YouTube](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting3/master/YouTube.png)
 

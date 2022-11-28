@@ -124,7 +124,6 @@ In order to incorporate several of the experimental datapoints, and for ease of 
 
 A video tutorial on how to install the TFBS_footprinting tool and run sample analyses is available:
 
-[Installation Tutorial]
 [![YouTube](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting3/master/YouTube.png)](https://www.youtube.com/watch?v=tJaLHKIhksU)
 
 

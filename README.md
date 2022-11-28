@@ -131,6 +131,15 @@ A video tutorial on how to install the TFBS_footprinting tool and run sample ana
 
 The TFBS_footprinting package can be installed directly to your linux system using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
 
+Create a conda environment based on python version 3.8, named 'tfbs':
+
+`$ conda create -n tfbs python=3.8`
+
+Activate the created conda environment:
+`$ conda activate tfbs`
+
+Install the TFBS_footprinting3 tool:
+
 `$ conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
 
 Install wget with pip:

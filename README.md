@@ -122,6 +122,11 @@ In order to incorporate several of the experimental datapoints, and for ease of 
 
 # 2. Installation
 
+A video tutorial on how to install the TFBS_footprinting tool is available here:
+[Installation Tutorial](https://www.youtube.com/watch?v=tJaLHKIhksU)
+![YouTube](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting3/master/YouTube.png)
+
+
 ## 2.1 Conda installation (recommended)
 
 The TFBS_footprinting package can be installed directly to your linux system using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
@@ -161,7 +166,7 @@ These requirements are automatically installed by Conda and the PIP installer, a
 ### IDs and arguments 
 In this first option a .csv table of Ensembl transcript IDs and optional arguments is used. Except for the first column indicating the Ensembl transcript id, any argument can be left blank which will result in the default value being used. An example of this file is included in the sample_analysis folder and can be downloaded from [Github](https://github.com/thirtysix/TFBS_footprinting/blob/master/sample_analysis/sample_analysis_list.csv).
 
-![input_csv](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting/master/sample_csv.png)
+![input_csv](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting3/master/sample_csv.png)
 
 ## 3.2 Text file of transcript IDs
 

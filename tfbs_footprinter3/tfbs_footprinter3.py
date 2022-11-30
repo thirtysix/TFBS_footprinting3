@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Python vers. 3.8.0 ###########################################################
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 
 
 # Libraries ####################################################################
@@ -700,8 +700,10 @@ def species_specific_data(target_species, chromosome, species_specific_data_dir)
     atac_seq_data_dir = os.path.join(species_specific_data_dir, "atac_data")
     if os.path.exists(atac_seq_data_dir):
         atac_seq_chrom_dict_filename = os.path.join(atac_seq_data_dir, ".".join([target_species, "atac-seq", "Chr"+chromosome.upper(), "msg"]))
+        
         if os.path.exists(atac_seq_chrom_dict_filename):
             atac_seq_dict = load_msgpack(atac_seq_chrom_dict_filename)
+            
 
     # load ATAC-Seq dist weights
     atac_dist_weights_dict = {}
@@ -1290,7 +1292,7 @@ def cpg_weights_summing(transcript_id, target_species_hit, cpg_obsexp_weights_di
             next_lesser_obsexp = cpg_obsexp_weights_dict_keys[-1]
         
         cpg_weight = cpg_obsexp_weights_dict[next_lesser_obsexp]
-        
+
         return cpg_weight
 
     else:
@@ -1840,10 +1842,10 @@ def CpG(aligned_filename):
         else:
             rolling_island = cpg_list[i-100:i+100]
 
-        Cs = sum(x[0] for x in rolling_island) * 1.0
-        Gs = sum(x[1] for x in rolling_island) * 1.0
+        Cs = sum(x[0] for x in rolling_island)
+        Gs = sum(x[1] for x in rolling_island)
         CorG_ratio = (Cs+Gs)/len(rolling_island)
-        num_cpg = sum(x[2] for x in rolling_island) * 1.0
+        num_cpg = sum(x[2] for x in rolling_island)
 
 
         obs = num_cpg/len(rolling_island)
@@ -2000,8 +2002,8 @@ def gtrd_positions_translate(target_dir, gtrd_metaclusters_dict, chromosome, str
     """
 
     potential_metaclusters_in_promoter = []        
-    promoter_start_millions = promoter_start/1000000
-    promoter_end_millions = promoter_end/1000000
+    promoter_start_millions = int(promoter_start/1000000)
+    promoter_end_millions = int(promoter_end/1000000)
 
     # retrieve the metacluster peaks on which the chrom that the transcript is found
     # if the millions place is the same for each then the metaclusters come from a single
@@ -2063,11 +2065,9 @@ def atac_pos_translate(atac_seq_dict, chromosome, strand, promoter_start, promot
     """
 
     potential_atac_seqs_in_promoter = []
-    
-##    chromosome = "chr" + chromosome.lower()
-##    if chromosome in atac_seq_dict:
-    promoter_start_millions = promoter_start/1000000
-    promoter_end_millions = promoter_end/1000000
+
+    promoter_start_millions = int(promoter_start/1000000)
+    promoter_end_millions = int(promoter_end/1000000)
 
     # retrieve the ATAC-Seq peaks on which the chrom that the transcript is found
     # if the millions place is the same for each then the atac-seqs come from a single subdict entry
@@ -2244,7 +2244,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
 
     # Set y-axis height based on number of entries in alignment
     y_range.sort()
-    tens_y = int(y_range[-1])/10 + 1
+    tens_y = int(int(y_range[-1])/10) + 1
 
     # Ensembl regulatory information
     # All will be horizontally plotted in some shade of red
@@ -2254,7 +2254,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         for i in range(2,100):
             alpha_gradient_dict[i] = 1./i
         reg_height = 1
-        reg_height = (tens_y * 1.0)/4 
+        reg_height = (tens_y)/4 
         for reg_id, data in converted_reg_dict.items():
             converted_start = int(data['converted_start'])
             converted_end = int(data['converted_end'])
@@ -2593,7 +2593,7 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         for i in range(2,100):
             alpha_gradient_dict[i] = 1./i
         reg_height = 1
-        reg_height = (tens_y * 1.0)/4 
+        reg_height = (tens_y)/4 
         for reg_id, data in converted_reg_dict.items():
             converted_start = int(data['converted_start'])
             converted_end = int(data['converted_end'])

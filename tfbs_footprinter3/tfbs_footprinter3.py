@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Python vers. 3.8.0 ###########################################################
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 
 
 # Libraries ####################################################################
@@ -51,6 +51,7 @@ instead of all CAGES.  Should reduce size and focus on most relevant CAGEs.
 number of TFs available becomes larger than those offered by JASPAR.  Similarly,
 if all JASPAR TFs become present in GTRD database, then switch from metaclusters
 to peaks by TF.
+3) Incorporate best combination of data sources by individual TF.
 """
 
 
@@ -118,9 +119,9 @@ def get_args():
 ##                        help=" ".join(['[default:', os.path.join(curdir, "tfbs_results"), '] - Full path of directory where result directories will be output.  Make sure that the root directory already exists.']))
 
     # for now pvalue refers to the PWM score, in the future it will need to relate to the combined affinity score
-    parser.add_argument('--pval', '-p', type=float, default=0.01, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
+    parser.add_argument('--pval', '-p', type=float, default=1, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
 
-    parser.add_argument('--pvalc', '-pc', type=float, default=0.01, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
+    parser.add_argument('--pvalc', '-pc', type=float, default=1, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
 
     parser.add_argument('--exp_data_update', '-update', action="store_true", help='Download the latest experimental data files for use in analysis.  Will run automatically if the "data" directory does not already exist (e.g. first usage).')
 
@@ -738,7 +739,8 @@ def overlap_range(x,y):
 ################################################################################
 # PWM analysis #################################################################
 ################################################################################
-def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_dict):
+#def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_dict):
+def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict):
     """
     Make a PWM from a nucleotide frequency table.
     """
@@ -760,11 +762,14 @@ def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_
             # pseudo-count = sqrt(total number of samples).
             pseudo_count = 0.8
 
+##            # background frequency for this nucleotide in the promoter.
+##            if strand == "+1":
+##                nuc_bg = bg_nuc_freq_dict[nuc_list[j]]
+##            if strand == "-1":
+##                nuc_bg = neg_bg_nuc_freq_dict[nuc_list[j]]
+
             # background frequency for this nucleotide in the promoter.
-            if strand == "+1":
-                nuc_bg = bg_nuc_freq_dict[nuc_list[j]]
-            if strand == "-1":
-                nuc_bg = neg_bg_nuc_freq_dict[nuc_list[j]]
+            nuc_bg = bg_nuc_freq_dict[nuc_list[j]]
 
             # probability of nuc
             nuc_probability = (nuc_count + pseudo_count/4)/(N + pseudo_count)
@@ -788,7 +793,7 @@ def PWM_scorer(seq, pwm, pwm_dict, pwm_type):
     return seq_score
 
 
-def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, all_pwms_loglikelihood_dict, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc):
+def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, species_nt_freq_d, all_pwms_loglikelihood_dict, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc):
     """
     1.Convert PFM to PWM for each TF in the Jaspar dictionary.
     2.Score all positions in the cleaned sequence
@@ -825,12 +830,18 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
 
         # generate background frequencies of each mono-nucleotide for forward and reverse strands
         bg_nuc_freq_dict = {}
-        neg_bg_nuc_freq_dict = {}
+        #neg_bg_nuc_freq_dict = {}
 
-        # https://arxiv.org/pdf/q-bio/0611041.pdf
-        # empirical data from complete genome
-        bg_nuc_freq_dict = {'A':0.292, 'C':0.207, 'G':0.207, 'T':0.292}
-        neg_bg_nuc_freq_dict = {'A':0.292, 'C':0.207, 'G':0.207, 'T':0.292}
+        # bool - check if species is human; use previously calculated nt freqs
+        if species == "homo_sapiens":
+            # https://arxiv.org/pdf/q-bio/0611041.pdf
+            # empirical data from complete genome
+            bg_nuc_freq_dict = {'A':0.292, 'C':0.207, 'G':0.207, 'T':0.292}
+            #neg_bg_nuc_freq_dict = {'A':0.292, 'C':0.207, 'G':0.207, 'T':0.292}
+
+        # bool - check if species is in our calculated species_nt_freq_d; use previously calculated nt freqs
+        elif species in species_nt_freq_d:
+            bg_nuc_freq_dict = species_nt_freq_d[species]
         
         # iterate through each tf_name and its motif
         for tf_name in target_tfs_list:
@@ -861,7 +872,8 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                     
                     # iterate through the forward and reverse strand sequences
                     for strand, seq in seq_dict.items():
-                        pwm = pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_dict)
+                        pwm = pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict)
+                        #pwm = pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_dict)
                         
                         seq_length = len(seq)
                         # iterate through the nt sequence, extract a current frame based on the motif size and score
@@ -2840,6 +2852,10 @@ def main():
                 all_pwms_loglikelihood_dict_filename = os.path.join(script_dir, 'data/all_pwms_loglikelihood_dict.reduced.msg')
                 all_pwms_loglikelihood_dict = load_msgpack(all_pwms_loglikelihood_dict_filename)
 
+                # load species nt frequencies
+                species_nt_freq_fn = os.path.join(script_dir, 'data/species_nt_freq.json')
+                species_nt_freq_d = load_json(species_nt_freq_fn)
+
                 last_target_species = None
                 
             for i, args_list in enumerate(args_lists):
@@ -2934,7 +2950,7 @@ def main():
 
                             if not (os.path.exists(cluster_dict_filename) and os.path.exists(sortedclusters_table_filename)):
                                 # score alignment for tfbss
-                                tfbss_found_dict = tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, all_pwms_loglikelihood_dict, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc)
+                                tfbss_found_dict = tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, species_nt_freq_d, all_pwms_loglikelihood_dict, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc)
                                 
                                 # sort through scores, identify hits in target_species supported in other species
                                 cluster_dict = find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_species, chromosome, tfbss_found_dict, cleaned_aligned_filename, converted_gerps_in_promoter, gerp_conservation_weight_dict,  converted_cages, converted_metaclusters_in_promoter, converted_atac_seqs_in_promoter, converted_eqtls, gtex_weights_dict, transcript_id, cage_dict, TF_cage_dict, cage_dist_weights_dict, atac_dist_weights_dict, metacluster_overlap_weights_dict, cpg_list, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cage_correlations_dict, cage_corr_weights_dict, gtex_variants, gene_len, cas_pvalues_dict, pvalc)

@@ -29,7 +29,8 @@ dependencies = [
   "biopython",
   "msgpack>=1.0.5",  # pre-1.0.5 frequently fell back to the pure-Python unpacker, ~10x slower on msg files
   "wget",
-  "pandas"
+  "pandas",
+  "pyarrow>=10",  # required for the Parquet output format (-of parquet); pandas uses it as the default parquet engine
 ]
 
 [project.urls]

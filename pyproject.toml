@@ -51,3 +51,33 @@ include = ["tfbs_footprinter3*"]
 
 [tool.setuptools.package-data]
 tfbs_footprinter3 = ["data/*.json"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py39"
+extend-exclude = ["dist", "build", "venv", "sample_analysis/tfbs_results"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W",  # pycodestyle
+  "F",       # pyflakes
+  "I",       # isort
+  "UP",      # pyupgrade
+  "B",       # flake8-bugbear (only noisy-safe rules)
+]
+ignore = [
+  "E501",    # line too long - we'll tackle after reformat
+  "E402",    # module-level import not at top - matplotlib backend set is legitimate
+  "E741",    # ambiguous variable names (l, I) - existing style
+  "E731",    # lambda assignments - existing style
+  "E722",    # bare except - TODO: audit and classify retryable vs fatal in ensemblrest refactor
+  "F841",    # unused local variables - will clean in refactor
+  "UP031",   # printf-style - batch later
+  "B007",    # unused loop variable - intentional in some places
+  "B008",    # function-call-in-default-argument
+]
+
+[tool.ruff.format]
+# Keep defaults; no string-quote normalization for now to minimize churn
+quote-style = "preserve"
+

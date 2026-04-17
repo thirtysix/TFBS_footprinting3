@@ -36,9 +36,8 @@ dependencies = [
 Homepage = "https://github.com/thirtysix/TFBS_footprinting3"
 
 [project.optional-dependencies]
-# You can add optional dev/test groups here in the future
-# dev = ["check-manifest"]
-# test = ["coverage"]
+test = ["pytest>=7", "pyarrow>=10"]
+dev = ["pytest>=7", "pyarrow>=10", "ruff>=0.1"]
 
 [project.scripts]
 tfbs_footprinter3 = "tfbs_footprinter3.tfbs_footprinter3:main"

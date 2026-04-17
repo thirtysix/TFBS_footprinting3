@@ -40,3 +40,20 @@ jobs:
       - run: pip install .
       - run: pip install wget  # runtime dep declared as pypi 'wget', install explicitly for smoke
       - run: tfbs_footprinter3 --help
+
+  test:
+    name: Unit tests / py${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install .[test]
+      - run: pip install wget
+      - run: pytest tests/ -v

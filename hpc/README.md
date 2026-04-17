@@ -18,7 +18,7 @@ supported by tfbs_footprinter3.
 | B | `prefetch.py` + `ensembl_cache.py` | workstation, one-time | `cache/ensembl.sqlite` |
 | C | `cas_only.py` via `slurm/submit.sh` | SLURM job array | `cas_scores/{species}/*.parquet` |
 | D | `build_cas_pvalues.py` | workstation | `artifacts/{species}/CAS_pvalues.0.1.tf_ls.json` |
-| E | S3 upload (todo) | workstation | `s3://tfbssexperimentaldata/{species}.tar.gz` |
+| E | `publish_to_s3.py` | workstation w/ AWS creds | `s3://tfbssexperimentaldata/{species}.tar.gz` |
 
 ## Stages B–D usage
 
@@ -42,6 +42,12 @@ sbatch --array=0-$((TOTAL_TRANSCRIPTS / CHUNK_SIZE - 1)) hpc/slurm/submit.sh
 python hpc/build_cas_pvalues.py --species mus_musculus
 # or to do every species present under hpc/cas_scores/
 python hpc/build_cas_pvalues.py --species all
+
+# Stage E: inject CAS JSON into S3 per-species tarballs
+# Requires `aws` CLI configured with write access to tfbssexperimentaldata.
+python hpc/publish_to_s3.py --species mus_musculus --dry-run   # inspect locally first
+python hpc/publish_to_s3.py --species mus_musculus             # actual upload
+python hpc/publish_to_s3.py --species all                      # batch
 ```
 
 ## Key design decisions
@@ -91,6 +97,7 @@ hpc/
 ├── prefetch.py                  (Stage B)
 ├── cas_only.py                  (Stage C worker)
 ├── build_cas_pvalues.py         (Stage D)
+├── publish_to_s3.py             (Stage E)
 ├── slurm/
 │   └── submit.sh                (Stage C SLURM array wrapper)
 ├── transcript_lists/            (gitignored; Stage A output)

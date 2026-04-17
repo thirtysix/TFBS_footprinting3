@@ -4,9 +4,10 @@ Renders the final promoter figure (predicted TFBSs, conservation, CpG,
 eQTLs, metaclusters, ATAC-Seq, CAGE, and TF-expression correlation tracks)
 to SVG via matplotlib.
 
-Extracted from tfbs_footprinter3.py. Matplotlib's non-interactive Agg
-backend is selected at module import time so the monolith and any future
-caller doesn't need to remember to set it before importing pyplot.
+Matplotlib is a large (~1.5s) import; we defer it to the first call to
+plot_promoter/plot_promoter_all via `_ensure_matplotlib_loaded()`. This
+keeps `tfbs_footprinter3 --help`, `-no`, and HPC runs (which pass `-no`)
+from paying the import cost.
 """
 from __future__ import annotations
 
@@ -14,14 +15,31 @@ import math
 import os
 from operator import itemgetter
 
-import matplotlib
+# Module-level placeholders populated by _ensure_matplotlib_loaded().
+# Type as Any so callers aren't bothered by the None-init pattern.
+plt = None  # matplotlib.pyplot
+mpl = None  # pylab.mpl
+numpyrandom = None  # numpy.random
 
-matplotlib.use("Agg")
 
-# Import order matters: matplotlib.use() must precede pyplot import.
-import matplotlib.pyplot as plt  # noqa: E402
-from numpy import random as numpyrandom  # noqa: E402
-from pylab import mpl  # noqa: E402
+def _ensure_matplotlib_loaded():
+    """Lazily import matplotlib + pylab + numpy.random on first figure call.
+
+    Matplotlib's Agg backend is selected BEFORE the pyplot import, so any
+    prior import of pyplot in the process wins over this. In practice the
+    tool never imports pyplot elsewhere.
+    """
+    global plt, mpl, numpyrandom
+    if plt is not None:
+        return
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as _plt
+    from numpy import random as _numpyrandom
+    from pylab import mpl as _mpl
+    plt = _plt
+    mpl = _mpl
+    numpyrandom = _numpyrandom
 
 
 def plot_promoter(target_species, transcript_id, species_group, alignment, alignment_len, promoter_before_tss, promoter_after_tss, transcript_name, top_x_greatest_hits_dict, target_dir, converted_reg_dict, converted_gerps_in_promoter, cpg_list, converted_cages, converted_metaclusters_in_promoter, converted_atac_seqs_in_promoter, converted_eqtls):
@@ -29,6 +47,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     Plot the predicted TFBSs, onto a 5000 nt promoter graph, which possess support above the current strand threshold.
     ['binding_prot', 'species', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value', 'pos in align.', 'combined affinity score', 'support']
     """
+    _ensure_matplotlib_loaded()
 
     # set axes for human
     if target_species == "homo_sapiens":
@@ -363,6 +382,7 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
     Plot the predicted TFBSs, onto a 5000 nt promoter graph, which possess support above the current strand threshold.
     ['binding_prot', 'species', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value', 'pos in align.', 'combined affinity score', 'support']
     """
+    _ensure_matplotlib_loaded()
 
     if target_species == "homo_sapiens":
         fig = plt.figure(figsize=(10, 6))

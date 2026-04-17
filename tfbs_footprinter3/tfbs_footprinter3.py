@@ -27,6 +27,20 @@ from tfbs_footprinter3 import __version__
 # `from tfbs_footprinter3.tfbs_footprinter3 import <func>` working for
 # existing callers (tests, hpc/, downstream users) after the monolith
 # split. When we eventually move main() into cli.py, this shim stays.
+from tfbs_footprinter3.alignment import (  # noqa: F401
+    fasta_writer,
+    load_genome_aligned,
+    remove_duplicate_species,
+    remove_gap_only,
+    remove_non_ACGT,
+)
+from tfbs_footprinter3.data_parsing import (  # noqa: F401
+    clean_jaspar_names,
+    compare_tfs_list_jaspar,
+    file_to_datalist,
+    parse_tf_ids,
+    parse_transcript_ids,
+)
 from tfbs_footprinter3.io_utils import (  # noqa: F401
     directory_creator,
     distance_solve,
@@ -311,60 +325,8 @@ def ensemblrest_rate(resp):
             time.sleep(sleep_time)
 
 
-def parse_transcript_ids(transcript_ids_filename):
-    """
-    If user has provided a file with Ensembl transcript ids, parse these to a list.
-    """
-
-    with open(transcript_ids_filename) as transcript_ids_file:
-        transcript_ids_list = transcript_ids_file.read().splitlines()
-        transcript_ids_list = [x for x in transcript_ids_list if len(x)>0]
-
-    return transcript_ids_list
-
-
-def parse_tf_ids(target_tfs_filename):
-    """
-    If user has provided a file with Ensembl transcript ids, parse these to a list.
-    """
-
-    with open(target_tfs_filename) as target_tfs_file:
-        target_tfs_list = target_tfs_file.read().splitlines()
-        target_tfs_list = [x.upper() for x in target_tfs_list if len(x)>0]
-
-    return target_tfs_list
-
-
-def file_to_datalist(data_filename, delimiter):
-    """
-    Starting with a filename, import and convert data to a list.
-    """
-
-    if os.path.exists(data_filename):
-        with open(data_filename) as data_file:
-            csv_reader = csv.reader(data_file, delimiter = delimiter)
-            all_data = list(csv_reader)
-    else:
-        all_data = []
-        print(data_filename, "does not exist.")
-
-    return all_data
-
-
-def compare_tfs_list_jaspar(target_tfs_list, TFBS_matrix_dict):
-    """
-    If user has provided a file containing Jaspar TF ids,
-    compare candidate entries to those in the loaded dictionary of Jaspar PWMs.
-    """
-
-    jaspar_dict_keys = TFBS_matrix_dict.keys()
-    erroneous = list(set(target_tfs_list) - set(jaspar_dict_keys))
-
-    target_tfs_list = list(set(jaspar_dict_keys).intersection(target_tfs_list))
-    if len(erroneous) > 0:
-        logging.warning(" ".join(["the following tf ids are not in the Jaspar database:", ", ".join(erroneous)]))
-
-    return target_tfs_list
+# parse_transcript_ids, parse_tf_ids, file_to_datalist, compare_tfs_list_jaspar
+# moved to tfbs_footprinter3/data_parsing.py (re-exported above).
 
 
 def experimentalDataUpdater(exp_data_update):
@@ -1365,42 +1327,7 @@ def cpg_weights_summing(transcript_id, target_species_hit, cpg_obsexp_weights_di
         return 0
 
 
-def clean_jaspar_names(uncleaned_jaspar_ids):
-    """
-    Clean names of jaspar transcription factor names.
-    MSX3 <- lost in humans.
-    RHOX11 <- only present in 3 species.
-    DUX <- mouse only gene.
-    EWSR1 <- didn't end up in the Ensembl BioMart export.
-    MIX-A <- jaspar says present in xenopus laevis, but not even showing
-    in Ensembl as a gene for any species.
-    """
-
-    special_dict = {"EWSR1-FLI1" : ["EWSR1","FLI1"]}
-    names_list = []
-
-    # split the combined names
-    for uncleaned_jaspar_id in uncleaned_jaspar_ids:
-        uncleaned_jaspar_id = uncleaned_jaspar_id.upper()
-        split_names = uncleaned_jaspar_id.split("::")
-        for name in split_names:
-            names_list.append(name)
-
-    # replace variants
-    for i, name in enumerate(names_list):
-        names_list[i] = name.replace("(VAR.2)","").replace("(VAR.3)","")
-
-    tmp_list = []
-    for i, name in enumerate(names_list):
-        if name in special_dict:
-            tmp_list += special_dict[name]
-        else:
-            tmp_list.append(name)
-
-    names_list = list(set(tmp_list))
-    names_list.sort()
-
-    return names_list
+# clean_jaspar_names moved to tfbs_footprinter3/data_parsing.py (re-exported above).
 
 
 def target_species_hits_table_writer(sorted_clusters_target_species_hits_list, output_table_name):
@@ -1543,102 +1470,8 @@ def retrieve_genome_aligned(target_species, chromosome, strand, promoter_start, 
     return alignment
 
 
-def fasta_writer(alignment, outfile):
-    """
-    Write ensembl JSON alignment to fasta file.
-    """
-
-    if not os.path.isfile(outfile) or (os.path.isfile(outfile) and os.path.getsize(outfile) == 0):
-        with open(outfile, "w") as aligned_file:
-            for entry in alignment:
-                record = SeqRecord(Seq(entry['seq']), id = entry['species'], description = "")
-                SeqIO.write(record, aligned_file, 'fasta')
-
-
-def remove_non_ACGT(alignment):
-    """
-    Remove non alignment characters and ambiguous nucleotides.  should consider changing to replacing any non ACGT char to '-'.
-    """
-
-    # account for sequences which are non-standard code
-    non_standard_dict = {'R':['A','G'],
-                         'Y':['C','T'],
-                         'S':['G','C'],
-                         'W':['A','T'],
-                         'K':['G','T'],
-                         'M':['A','C'],
-                         'B':['C','G','T'],
-                         'D':['A','G','T'],
-                         'H':['A','C','T'],
-                         'V':['A','C','G']}
-
-    non_alignment_chars = " .N"
-    for entry in alignment:
-        for non_alignment_char in non_alignment_chars:
-            entry['seq'] = entry['seq'].replace(non_alignment_char, '-')
-
-        for multi_char, replacement_list in non_standard_dict.items():
-            entry['seq'] = entry['seq'].replace(non_alignment_char, replacement_list[0])
-
-    return alignment
-
-
-def remove_gap_only(alignment):
-    """
-    Find columns in the alignment where the entire column is '-',
-        replace the '-' with 'P', then remove the '*'.
-    """
-
-    if len(alignment) > 0:
-        for entry in alignment:
-            entry['seq'] = list(entry['seq'])
-
-        for i in range(0,len(alignment[0]['seq'])):
-            col = [x['seq'][i] for x in alignment]
-            if col.count('-') == len(col):
-                for entry in alignment:
-                    entry['seq'][i] = 'Z'
-        for entry in alignment:
-            entry['seq'] = "".join(entry['seq']).replace('Z',"")
-
-    return alignment
-
-
-def remove_duplicate_species(alignment, target_species):
-    """
-    If there are multiple entries for a single species in an alignment retrieved from Ensembl,
-    keep the one which has more ACGT characters.
-    """
-
-    entry_ids = [x['species'] for x in alignment]
-    duplicate_ids = list(set([x for x in entry_ids if entry_ids.count(x) > 1]))
-    non_duplicate_alignment = [x for x in alignment if x['species'] not in duplicate_ids]
-    for duplicate_id in duplicate_ids:
-        duplicate_seqs = [x for x in alignment if x['species'] == duplicate_id]
-        duplicate_seqs_lens = [x['seq'].count('-') for x in duplicate_seqs]
-        sorted_duplicate_seqs_lens = duplicate_seqs_lens[:]
-        sorted_duplicate_seqs_lens.sort()
-        longest_seq = sorted_duplicate_seqs_lens[0]
-        longest_seq_index = duplicate_seqs_lens.index(longest_seq)
-        kept_seq = duplicate_seqs[longest_seq_index]
-        if duplicate_id == target_species:
-            non_duplicate_alignment = [kept_seq] + non_duplicate_alignment
-        else:
-            non_duplicate_alignment.append(kept_seq)
-
-    return non_duplicate_alignment
-
-
-def load_genome_aligned(aligned_filename):
-    """
-    Load previously retrieved alignment fasta file into dictionary.
-    """
-
-    with open(aligned_filename) as alignment_handle:
-        alignment_list = list(SeqIO.parse(alignment_handle, 'fasta'))
-    alignment = [{'seq': str(entry.seq), 'species':entry.id} for entry in alignment_list if '[' not in entry.id]
-
-    return alignment
+# fasta_writer, remove_non_ACGT, remove_gap_only, remove_duplicate_species,
+# load_genome_aligned moved to tfbs_footprinter3/alignment.py (re-exported above).
 
 
 def alignment_tools(ensembl_aligned_filename, cleaned_aligned_filename, target_species, chromosome, strand, promoter_start, promoter_end):

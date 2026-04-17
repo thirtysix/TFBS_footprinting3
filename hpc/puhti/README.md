@@ -61,6 +61,12 @@ python hpc/ensembl_gtf.py \
 SPECIES=acanthochromis_polyacanthus
 PROJECT=/scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
+# rsync 3.1.x will not auto-create missing parent dirs, so create the
+# per-species run dir on Puhti first. (The -p in `mkdir -p` means this
+# is also safe to re-run across species and creates $PROJECT itself
+# on first use.)
+ssh barker@puhti.csc.fi "mkdir -p ${PROJECT}/runs/${SPECIES}"
+
 rsync hpc/transcript_lists/${SPECIES}.txt \
     barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/transcripts.txt
 ```
@@ -71,10 +77,7 @@ rsync hpc/transcript_lists/${SPECIES}.txt \
 ssh barker@puhti.csc.fi
 cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
-# One-time: create the per-species run dir
-mkdir -p runs/${SPECIES}
-
-# Launch
+# Launch (per-species run dir already created by step 2)
 sbatch --export=SPECIES=${SPECIES} \
     TFBS_footprinting3/hpc/puhti/pilot_submit.sh
 ```

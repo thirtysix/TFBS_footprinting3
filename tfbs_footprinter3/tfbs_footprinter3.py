@@ -21,7 +21,6 @@ import logging
 from Bio import SeqIO
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-##from Bio.Alphabet import IUPAC
 from Bio import AlignIO
 
 import pandas as pd

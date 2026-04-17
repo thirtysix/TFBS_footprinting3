@@ -44,11 +44,15 @@ _TF_COL = "binding prot."
 _CAS_COL = "combined affinity score"
 _ROUND_DECIMALS = 2
 
-# The runtime JSON artifact the tool consumes (`CAS_pvalues.0.1.tf_ls.json`)
-# only stores score-pvalue pairs at p <= 0.1. The reference human file
-# encodes this in the filename ("0.1"). Low-significance scores give no
-# useful CAS threshold; truncating here cuts JSON size ~10x.
-_JSON_PVALUE_CUTOFF = 0.1
+# NOTE on the "0.1" in the output filename: this is a historical artifact.
+# Early tool releases truncated the JSON to p <= 0.1 to save space, then
+# bisected the remaining sorted list for lookup. The tool still loads the
+# same filename (`tfbs_footprinter3/data_loader.py:306`) and still uses
+# bisect_left on the sorted score list, but there's no reason to keep the
+# truncation: emitting the full distribution lets the tool report p-values
+# for non-significant hits too (p between 0.1 and 1.0), which
+# `pwm_results_summaries/*.CAS_pvalue_score.tsv` was designed to provide.
+# We keep the literal filename for backward compatibility with the loader.
 
 
 def _target_p_values() -> list[float]:
@@ -158,12 +162,7 @@ def build_for_species(
             tfs_dropped += 1
             continue
         pairs = _empirical_survival_pvalues(scores)
-        # Runtime JSON only carries the significant tail (p <= 0.1); anything
-        # less significant is redundant for CAS lookups. calcCombinedAffinityPvalue
-        # returns ">0.1" for scores below the first entry, which is the right
-        # behavior for non-significant hits.
-        json_pairs = [[s, p] for s, p in pairs if p <= _JSON_PVALUE_CUTOFF]
-        tf_pvalues_json[tf_name] = json_pairs
+        tf_pvalues_json[tf_name] = [[s, p] for s, p in pairs]
         for t, s in _scores_at_target_pvalues(pairs, targets):
             tsv_rows.append((tf_name, t, s))
         tfs_kept += 1

@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # Python vers. 3.8.0 ###########################################################
 import argparse
-import json
 import logging
 import os
 import signal
@@ -11,7 +10,6 @@ import tarfile
 import textwrap
 import time
 
-import httplib2
 import matplotlib
 import pandas as pd
 import wget
@@ -38,6 +36,7 @@ from tfbs_footprinter3.data_parsing import (  # noqa: F401
     parse_tf_ids,
     parse_transcript_ids,
 )
+from tfbs_footprinter3.ensembl import ensemblrest, ensemblrest_rate  # noqa: F401
 from tfbs_footprinter3.io_utils import (  # noqa: F401
     directory_creator,
     distance_solve,
@@ -274,78 +273,9 @@ def get_args():
 # is_online moved to tfbs_footprinter3/io_utils.py (re-exported above).
 
 
-def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
-    """
-    Retrieve REST data from Ensembl using provided ID, query type, and options.
-    """
-
-    http = httplib2.Http()
-    server = "http://rest.ensembl.org"
-    full_query = server + query_type + ensembl_id + options
-
-    if log:
-        logging.info(" ".join(["Ensembl REST query made:", full_query]))
-
-    success = False
-    try_count = 0
-    max_tries = 10
-    fail_sleep_time = 120
-    decoded_json = {}
-    fasta_content = []
-
-    if output_type == 'json':
-        while not success and try_count < max_tries:
-            try:
-                resp, json_data = http.request(full_query, method="GET")
-                decoded_json = json.loads(json_data)
-                ensemblrest_rate(resp)
-                try_count += 1
-                success = True
-                return decoded_json
-
-            except:
-                logging.info(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", full_query]))
-                try_count += 1
-                print(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", "See logfile for query."]))
-                time.sleep(fail_sleep_time)
-
-        # return empty decoded_json if max tries has elapsed
-        return decoded_json
-
-    if output_type == 'fasta':
-        while not success and try_count < max_tries:
-            try:
-                resp, fasta_content = http.request(server, method="GET", headers={"Content-Type":"text/x-fasta"})
-                ensemblrest_rate(resp)
-                try_count += 1
-                success = True
-                return fasta_content
-
-            except:
-                logging.info(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", full_query]))
-                try_count += 1
-                print(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", "See logfile for query."]))
-                time.sleep(fail_sleep_time)
-
-        # return empty fasta_content if max tries has elapsed
-        return fasta_content
-
-
-def ensemblrest_rate(resp):
-    """
-    Read ensembl REST headers and determine if rate-limit has been exceeded, sleep appropriately if necessary.
-    """
-
-    if int(resp['x-ratelimit-remaining']) == 0:
-        if 'Retry-After' in resp:
-            sleep_time = int(resp['Retry-After'])
-            logging.warning(" ".join(["Ensembl REST (Retry-After) requests sleeping for:", str(sleep_time)]))
-            time.sleep(sleep_time)
-
-        else:
-            sleep_time = 60
-            logging.warning(" ".join(["Ensembl REST requests sleeping for:", str(sleep_time)]))
-            time.sleep(sleep_time)
+# ensemblrest and ensemblrest_rate moved to tfbs_footprinter3/ensembl.py
+# (re-exported above). The HPC cache patches tff.ensemblrest here in the
+# monolith's namespace — see hpc/ensembl_cache.py::patch_tfbs_footprinter3().
 
 
 # parse_transcript_ids, parse_tf_ids, file_to_datalist, compare_tfs_list_jaspar

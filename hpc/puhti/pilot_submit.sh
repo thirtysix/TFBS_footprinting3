@@ -21,7 +21,7 @@
 #SBATCH --partition=small
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --mem=32G
 #SBATCH --time=02:30:00
 #SBATCH --output=%x_%j.out
 #SBATCH --error=%x_%j.err

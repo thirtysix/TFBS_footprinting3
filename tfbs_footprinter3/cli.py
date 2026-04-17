@@ -312,7 +312,7 @@ def main():
         if experimental_data_present:
             if len(args_lists) > 0:
                 # load mono-nuc PFMs
-                TFBS_matrix_filename = os.path.join(script_dir, 'data/pwms.json')
+                TFBS_matrix_filename = os.path.join(script_dir, 'data/JASPAR_2026_pwms.json')
                 TFBS_matrix_dict = load_json(TFBS_matrix_filename)
                 TFBS_matrix_dict = {k.upper(): v for k, v in TFBS_matrix_dict.items()}
 

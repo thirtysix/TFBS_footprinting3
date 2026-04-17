@@ -130,12 +130,16 @@ def get_args():
 
     parser.add_argument('--nofig', '-no', action="store_true", help="Don't output a figure.")
 
+    parser.add_argument('--cache_intermediates', '-ci', action="store_true",
+                        help="Write cluster_dict.json (a large internal cache of per-TF hits with CAS + weights) alongside the user-facing TFBSs_found.sortedclusters.csv. Disabled by default because this file can be 100s of MB per transcript at pvalc=1 and is only needed for re-running without recomputing. The CSV output is unaffected.")
+
     # pre-processing the arguments
     args = parser.parse_args()
     args_lists = []
     transcript_ids_filename = args.t_ids_file
     exp_data_update = args.exp_data_update
     nofigure = args.nofig
+    cache_intermediates = args.cache_intermediates
 
     if transcript_ids_filename:
         filename, file_extension = os.path.splitext(transcript_ids_filename)
@@ -215,7 +219,7 @@ def get_args():
                 args_list = [args, transcript_ids_filename, transcript_id, target_tfs_filename, promoter_before_tss, promoter_after_tss, top_x_tfs_count, pval, pvalc]
                 args_lists.append(args_list)
 
-    return args_lists, exp_data_update, nofigure
+    return args_lists, exp_data_update, nofigure, cache_intermediates
 
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -238,7 +242,7 @@ def main():
     logging.info(" ".join(["***NEW SET OF ANALYSES HAS BEGUN***"]))
 
     if is_online():
-        args_lists, exp_data_update, nofigure = get_args()
+        args_lists, exp_data_update, nofigure, cache_intermediates = get_args()
 
         # if experimental data dir does not exist or user has requested an exp data update, then update.
         experimental_data_present = experimentalDataUpdater(exp_data_update)
@@ -278,7 +282,12 @@ def main():
                 sortedclusters_table_filename = os.path.join(target_dir, ".".join(["TFBSs_found", "sortedclusters", "csv"]))
 
                 # check if results have been created for this query.
-                required_results_filenames = [cluster_dict_filename, ensembl_aligned_filename, cleaned_aligned_filename, transcript_dict_filename, gene_dict_filename, regulatory_decoded_filename, sortedclusters_table_filename]
+                # cluster_dict.json is only required when -ci/--cache_intermediates is on;
+                # by default the resume check keys off the user-facing CSV + the small
+                # Ensembl/alignment caches (transcript_dict / gene_dict / regulatory_decoded / alignment.fasta).
+                required_results_filenames = [ensembl_aligned_filename, cleaned_aligned_filename, transcript_dict_filename, gene_dict_filename, regulatory_decoded_filename, sortedclusters_table_filename]
+                if cache_intermediates:
+                    required_results_filenames.append(cluster_dict_filename)
                 results_files_exist = all([os.path.exists(x) for x in required_results_filenames])
 
                 if not results_files_exist:
@@ -350,14 +359,19 @@ def main():
                             # create index of aligned to unaligned positions
                             unaligned2aligned_index_dict = unaligned2aligned_indexes(cleaned_aligned_filename)
 
-                            if not (os.path.exists(cluster_dict_filename) and os.path.exists(sortedclusters_table_filename)):
+                            # Decide whether to (re)compute or load an existing cluster_dict.
+                            # With caching on: load from cluster_dict.json when it exists.
+                            # Without caching: always recompute (the file won't be there).
+                            can_load_cluster = cache_intermediates and os.path.exists(cluster_dict_filename) and os.path.exists(sortedclusters_table_filename)
+                            if not can_load_cluster:
                                 # score alignment for tfbss
                                 tfbss_found_dict = tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, species_nt_freq_d, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc)
 
                                 # sort through scores, identify hits in target_species supported in other species
                                 cluster_dict = find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_species, chromosome, tfbss_found_dict, cleaned_aligned_filename, converted_gerps_in_promoter, converted_cages, converted_metaclusters_in_promoter, metacluster_in_promoter_counts, converted_atac_seqs_in_promoter, converted_eqtls, gtex_weights_dict, transcript_id, cage_dict, TF_cage_dict, cage_dist_weights_dict, metacluster_overlap_weights_dict, cpg_list, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cage_correlations_dict, cage_corr_weights_dict, gtex_variants, gene_len, cas_pvalues_dict, pvalc)
                                 tfbss_found_dict.clear()
-                                dump_json(cluster_dict_filename, cluster_dict)
+                                if cache_intermediates:
+                                    dump_json(cluster_dict_filename, cluster_dict)
 
                             else:
                                 cluster_dict = load_json(cluster_dict_filename)

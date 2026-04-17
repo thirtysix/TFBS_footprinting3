@@ -27,7 +27,7 @@ dependencies = [
   "numpy",
   "matplotlib",
   "biopython",
-  "msgpack",
+  "msgpack>=1.0.5",  # pre-1.0.5 frequently fell back to the pure-Python unpacker, ~10x slower on msg files
   "wget",
   "pandas"
 ]

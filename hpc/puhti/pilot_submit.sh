@@ -47,8 +47,11 @@ fi
 
 # Ensure Lmod / `module` is available. sbatch on Puhti can spawn a shell
 # where `module` is not a defined function, even with -l. Try the common
-# init locations; the first one present wins.
+# init locations; the first one present wins. The `set +u` wrapper is
+# because CSC's zz-csc-env.sh references LC_CTYPE (and possibly other
+# unset vars) that would otherwise abort us under `set -u`.
 if ! command -v module >/dev/null 2>&1; then
+    set +u
     for _lmod_init in \
         /appl/profile/zz-csc-env.sh \
         /etc/profile.d/lmod.sh \
@@ -60,6 +63,7 @@ if ! command -v module >/dev/null 2>&1; then
             break
         fi
     done
+    set -u
 fi
 
 # Python env set up by hpc/puhti/README.md one-time setup

@@ -38,6 +38,7 @@ from tfbs_footprinter3.io_utils import (
     dump_json,
     is_online,
     load_json,
+    load_msgpack,  # noqa: F401  (re-exported for backward-compat)
     signal_handler,
 )
 from tfbs_footprinter3.output import (
@@ -71,6 +72,62 @@ from tfbs_footprinter3.translators import (
 
 script_dir = os.path.dirname(__file__)
 curdir = os.getcwd()
+
+
+def _prefetch_and_sort_transcripts(args_lists, output_dir):
+    """Group transcripts by (species, chromosome) so the per-transcript
+    processing loop gets maximum cache hits on species_specific_data.
+
+    Does a single up-front pass over args_lists that:
+      * Calls transfabulator for each transcript (hits Ensembl REST once,
+        or reads the transcript_dict.json cache if a prior run wrote it).
+      * Saves transcript_dict.json under each target_dir ONLY when the
+        response validates as a real transcript, so failed IDs don't
+        litter the results directory with empty caches.
+      * Returns args_lists reordered by (species, seq_region_name). Within
+        each (species, chromosome) bucket the original relative order is
+        preserved (Python's sort is stable).
+
+    For a user who organized their input by chromosome this is a no-op.
+    For anyone else it cuts species_specific_data calls from one-per-
+    transcript down to one-per-unique-(species, chromosome) — and that
+    load is the heaviest one-time cost in the pipeline.
+    """
+    if len(args_lists) <= 1:
+        return args_lists
+
+    annotated = []
+    unknown_key = ("~~", "~~")  # sorts after real species/chromosomes
+    for al in args_lists:
+        # args_list layout matches get_args():
+        #   [args_ns, transcript_ids_filename, transcript_id, target_tfs_filename,
+        #    promoter_before_tss, promoter_after_tss, top_x_tfs_count, pval, pvalc]
+        transcript_id = al[2]
+        promoter_before_tss = al[4]
+        promoter_after_tss = al[5]
+        pval = al[7]
+
+        start_end = "(" + "_".join([str(promoter_before_tss), str(promoter_after_tss)]) + ")"
+        target_dir_name = "_".join([transcript_id + start_end, str(pval)])
+        target_dir = os.path.join(output_dir, target_dir_name)
+        transcript_dict_filename = os.path.join(target_dir, "transcript_dict.json")
+
+        if os.path.isfile(transcript_dict_filename) and os.path.getsize(transcript_dict_filename) > 0:
+            decoded = load_json(transcript_dict_filename)
+        else:
+            decoded = transfabulator(transcript_id, transcript_dict_filename)
+            if test_transcript_id(decoded, transcript_id):
+                directory_creator(target_dir)
+                dump_json(transcript_dict_filename, decoded)
+
+        if decoded and "species" in decoded and "seq_region_name" in decoded:
+            key = (decoded["species"], str(decoded["seq_region_name"]))
+        else:
+            key = unknown_key
+        annotated.append((key, al))
+
+    annotated.sort(key=lambda pair: pair[0])
+    return [al for _, al in annotated]
 
 
 def get_args():
@@ -262,6 +319,13 @@ def main():
                 # load species nt frequencies
                 species_nt_freq_fn = os.path.join(script_dir, 'data/species_nt_freq.json')
                 species_nt_freq_d = load_json(species_nt_freq_fn)
+
+                # Group transcripts by (species, chromosome) so the
+                # species_specific_data cache below fires maximally.
+                # Amortizes one Ensembl /lookup/id call per transcript up
+                # front in exchange for potentially dozens of skipped
+                # species_specific_data reloads.
+                args_lists = _prefetch_and_sort_transcripts(args_lists, output_dir)
 
                 last_target_species = None
                 last_chromosome = None

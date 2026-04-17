@@ -43,10 +43,13 @@ from pathlib import Path
 # and Stage D can read without any HPC-local imports.
 CAS_OUTPUT_COLUMNS = ["transcript_id", "tf_name", "cas_score"]
 
-# Columns present in TFBSs_found.sortedclusters.csv (see README.md section 4.2)
-# We only need `binding prot` and `combined affinity score`.
-CSV_TF_COL = "binding prot"
-CSV_CAS_COL = "combined affinity score"
+# Columns present in TFBSs_found.sortedclusters.{csv,parquet}. We only need
+# the TF name and the CAS score — parquet's column names use spaces where
+# CSV embeds newlines for display; handle both.
+CSV_TF_COL = "binding prot."
+CSV_CAS_COL = "combined\naffinity\nscore"
+PARQUET_TF_COL = "binding prot."
+PARQUET_CAS_COL = "combined affinity score"
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
@@ -89,24 +92,40 @@ def write_tool_csv(transcripts: list[str], out_csv: Path, args: argparse.Namespa
 
 
 def collect_cas_rows(results_dir: Path, transcripts: list[str], args: argparse.Namespace) -> list[tuple]:
-    """Parse each transcript's TFBSs_found.sortedclusters.csv, emit hit rows."""
-    # Tool names its per-transcript subdir as {tid}_(before_after)_{pval}
+    """Parse each transcript's sorted-clusters output, emit CAS hit rows.
+
+    Prefers Parquet over CSV per transcript: Parquet reads are ~10x faster
+    at this row count and the harness already depends on pandas. Falls
+    back to CSV if only that format was written.
+    """
     suffix = f"({args.promoter_before}_{args.promoter_after})_{args.pval}"
     rows: list[tuple] = []
     missing = []
+
+    pandas_mod = None  # lazy-load only if we hit a parquet path
+
     for tid in transcripts:
-        csv_path = results_dir / f"{tid}_{suffix}" / "TFBSs_found.sortedclusters.csv"
-        if not csv_path.exists():
+        tid_dir = results_dir / f"{tid}_{suffix}"
+        parquet_path = tid_dir / "TFBSs_found.sortedclusters.parquet"
+        csv_path = tid_dir / "TFBSs_found.sortedclusters.csv"
+
+        if parquet_path.exists():
+            if pandas_mod is None:
+                import pandas as pandas_mod  # noqa: PLC0415 — lazy import
+            df = pandas_mod.read_parquet(parquet_path, columns=[PARQUET_TF_COL, PARQUET_CAS_COL])
+            rows.extend(zip([tid] * len(df), df[PARQUET_TF_COL].tolist(), df[PARQUET_CAS_COL].tolist(), strict=True))
+        elif csv_path.exists():
+            with csv_path.open() as f:
+                reader = csv.DictReader(f)
+                for r in reader:
+                    try:
+                        score = float(r[CSV_CAS_COL])
+                    except (KeyError, ValueError, TypeError):
+                        continue
+                    rows.append((tid, r[CSV_TF_COL], score))
+        else:
             missing.append(tid)
-            continue
-        with csv_path.open() as f:
-            reader = csv.DictReader(f)
-            for r in reader:
-                try:
-                    score = float(r[CSV_CAS_COL])
-                except (KeyError, ValueError, TypeError):
-                    continue
-                rows.append((tid, r[CSV_TF_COL], score))
+
     if missing:
         logging.warning("no output for %d transcript(s): %s", len(missing), missing[:5])
     return rows
@@ -129,7 +148,8 @@ def run_main_inprocess(tool_csv: Path, workdir: Path) -> None:
         # curdir was captured at import-time (tfbs_footprinter3.py:64); re-bind.
         tff.curdir = str(workdir)
         saved_argv = sys.argv[:]
-        sys.argv = ["tfbs_footprinter3", "-t", str(tool_csv), "-no"]
+        # Ask the tool for Parquet so collect_cas_rows can read the fast path.
+        sys.argv = ["tfbs_footprinter3", "-t", str(tool_csv), "-no", "-of", "parquet"]
         try:
             tff.main()
         finally:

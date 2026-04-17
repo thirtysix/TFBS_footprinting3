@@ -43,6 +43,7 @@ from tfbs_footprinter3.io_utils import (
 from tfbs_footprinter3.output import (
     sort_target_species_hits,
     target_species_hits_table_writer,
+    target_species_hits_table_writer_parquet,
     top_greatest_hits,
     top_x_greatest_hits,
 )
@@ -133,6 +134,9 @@ def get_args():
     parser.add_argument('--cache_intermediates', '-ci', action="store_true",
                         help="Write cluster_dict.json (a large internal cache of per-TF hits with CAS + weights) alongside the user-facing TFBSs_found.sortedclusters.csv. Disabled by default because this file can be 100s of MB per transcript at pvalc=1 and is only needed for re-running without recomputing. The CSV output is unaffected.")
 
+    parser.add_argument('--output_format', '-of', choices=['csv', 'parquet', 'both'], default='csv',
+                        help="Format for the sorted-clusters output table. 'csv' (default) is human-readable. 'parquet' is ~10x faster to write and ~10x smaller on disk but requires the optional pyarrow dep (install with: pip install 'tfbs_footprinting3[parquet]'); recommended for HPC/batch runs. 'both' writes both files.")
+
     # pre-processing the arguments
     args = parser.parse_args()
     args_lists = []
@@ -140,6 +144,7 @@ def get_args():
     exp_data_update = args.exp_data_update
     nofigure = args.nofig
     cache_intermediates = args.cache_intermediates
+    output_format = args.output_format
 
     if transcript_ids_filename:
         filename, file_extension = os.path.splitext(transcript_ids_filename)
@@ -219,7 +224,7 @@ def get_args():
                 args_list = [args, transcript_ids_filename, transcript_id, target_tfs_filename, promoter_before_tss, promoter_after_tss, top_x_tfs_count, pval, pvalc]
                 args_lists.append(args_list)
 
-    return args_lists, exp_data_update, nofigure, cache_intermediates
+    return args_lists, exp_data_update, nofigure, cache_intermediates, output_format
 
 
 signal.signal(signal.SIGINT, signal_handler)
@@ -242,7 +247,7 @@ def main():
     logging.info(" ".join(["***NEW SET OF ANALYSES HAS BEGUN***"]))
 
     if is_online():
-        args_lists, exp_data_update, nofigure, cache_intermediates = get_args()
+        args_lists, exp_data_update, nofigure, cache_intermediates, output_format = get_args()
 
         # if experimental data dir does not exist or user has requested an exp data update, then update.
         experimental_data_present = experimentalDataUpdater(exp_data_update)
@@ -279,7 +284,13 @@ def main():
                 transcript_dict_filename = os.path.join(target_dir, "transcript_dict.json")
                 gene_dict_filename = os.path.join(target_dir, "gene_dict.json")
                 regulatory_decoded_filename = os.path.join(target_dir, "regulatory_decoded.json")
-                sortedclusters_table_filename = os.path.join(target_dir, ".".join(["TFBSs_found", "sortedclusters", "csv"]))
+                sortedclusters_csv_filename = os.path.join(target_dir, "TFBSs_found.sortedclusters.csv")
+                sortedclusters_parquet_filename = os.path.join(target_dir, "TFBSs_found.sortedclusters.parquet")
+                # The resume check keys off whichever format(s) were requested.
+                if output_format == "parquet":
+                    sortedclusters_table_filename = sortedclusters_parquet_filename
+                else:
+                    sortedclusters_table_filename = sortedclusters_csv_filename
 
                 # check if results have been created for this query.
                 # cluster_dict.json is only required when -ci/--cache_intermediates is on;
@@ -379,7 +390,13 @@ def main():
                             # sort the target_species hits supported by other species
                             sorted_clusters_target_species_hits_list = sort_target_species_hits(cluster_dict)
 
-                            target_species_hits_table_writer(sorted_clusters_target_species_hits_list, sortedclusters_table_filename)
+                            if output_format in ("csv", "both"):
+                                target_species_hits_table_writer(sorted_clusters_target_species_hits_list, sortedclusters_csv_filename)
+                            if output_format in ("parquet", "both"):
+                                # Parquet path also applies sci-pval formatting in-place; if we
+                                # already ran the CSV writer on this same list, the p-value columns
+                                # are already formatted (sci_cache is a no-op the 2nd time). Safe.
+                                target_species_hits_table_writer_parquet(sorted_clusters_target_species_hits_list, sortedclusters_parquet_filename)
 
                             if len(sorted_clusters_target_species_hits_list) > 0:
                                 # extract the top x target_species hits supported by other species

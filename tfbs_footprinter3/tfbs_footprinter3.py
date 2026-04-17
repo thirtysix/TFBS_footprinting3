@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 # Python vers. 3.8.0 ###########################################################
-__version__ = "0.0.7"
+from tfbs_footprinter3 import __version__
 
 
 # Libraries ####################################################################

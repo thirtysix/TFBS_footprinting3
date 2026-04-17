@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "TFBS_footprinting3"
-version = "0.0.7"
+dynamic = ["version"]
 description = "Tool for identifying conserved TFBSs in vertebrate species."
 readme = "README.md"
 requires-python = ">=3.7"
@@ -42,3 +42,12 @@ Homepage = "https://github.com/thirtysix/TFBS_footprinting3"
 
 [project.scripts]
 tfbs_footprinter3 = "tfbs_footprinter3.tfbs_footprinter3:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "tfbs_footprinter3.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["tfbs_footprinter3*"]
+
+[tool.setuptools.package-data]
+tfbs_footprinter3 = ["data/*.json"]

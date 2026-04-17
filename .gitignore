@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+.eggs/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Build / distribution
+build/
+*.whl
+
+# Test + tool output
+tfbs_results/
+sample_analysis/tfbs_results/
+*.log
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Editor / OS
+.Rhistory
+.DS_Store
+.idea/
+.vscode/
+
+# Claude Code local state
+.claude/
+
+# HPC scratch (created by hpc/ scripts)
+hpc/cache/
+hpc/cas_scores/
+hpc/artifacts/
+hpc/transcript_lists/

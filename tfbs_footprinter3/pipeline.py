@@ -28,6 +28,7 @@ import time
 from bisect import bisect_left
 from operator import itemgetter
 
+import numpy as np
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
@@ -40,7 +41,7 @@ from tfbs_footprinter3.alignment import (
     remove_non_ACGT,
 )
 from tfbs_footprinter3.io_utils import dump_json, load_json
-from tfbs_footprinter3.pwm import PWM_scorer, pwm_maker
+from tfbs_footprinter3.pwm import pwm_maker, pwm_scan_sliding, seq_to_int_array
 from tfbs_footprinter3.translators import start_end_found_motif
 
 
@@ -77,6 +78,14 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
         forward_seq = str(entry_seqrecord.seq)
         reverse_seq = str(entry_seqrecord.seq.reverse_complement())
         seq_dict = {"+1": forward_seq, "-1": reverse_seq}
+
+        # Precompute int-encoded sequences once per strand; fancy-indexing
+        # into the PWM array during the per-TF scan uses these.
+        mononuc_pwm_dict_ndarray_compatible = {"A": 0, "C": 1, "G": 2, "T": 3}
+        seq_int_dict = {
+            strand: seq_to_int_array(seq, mononuc_pwm_dict_ndarray_compatible)
+            for strand, seq in seq_dict.items()
+        }
 
         # generate background frequencies of each mono-nucleotide for forward and reverse strands
         bg_nuc_freq_dict = {}
@@ -119,36 +128,45 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                     # iterate through the forward and reverse strand sequences
                     for strand, seq in seq_dict.items():
                         pwm = pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict)
+                        pwm_array = np.asarray(pwm, dtype=np.float64)
 
                         seq_length = len(seq)
-                        # iterate through the nt sequence, extract a current frame based on the motif size and score
-                        for i in range(0, seq_length - motif_length):
+                        # Vectorized PWM scan: compute scores at every window
+                        # start in one NumPy operation, then iterate only over
+                        # the indices that pass the threshold. Matches the
+                        # original loop range (0, seq_length - motif_length)
+                        # by slicing to that length (sliding_window_view yields
+                        # one more window than the original iterated).
+                        seq_int = seq_int_dict[strand]
+                        all_scores = pwm_scan_sliding(seq_int, pwm_array)[:seq_length - motif_length]
+                        passing_indices = np.flatnonzero(all_scores >= tf_pwm_score_threshold)
+
+                        for i in passing_indices.tolist():
+                            current_frame_score = float(all_scores[i])
+                            current_frame_score = round(current_frame_score, 2)
+
+                            pval_index = bisect_left(scores_list_sorted, current_frame_score)
+                            if pval_index >= len(pvals_scores_list_sorted):
+                                pval_index = -1
+                            else:
+                                pval_index -= 1
+
+                            # account for pvalues which are larger than the current largest, so that they can be distinguished appropriately in the result table.
+                            if pval_index < 0:
+                                current_frame_score_pvalue = ">" + str(pvals_scores_list_sorted[0][0])
+                            else:
+                                current_frame_score_pvalue = str(pvals_scores_list_sorted[pval_index][0])
+
+                            hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end = start_end_found_motif(i, strand, seq_length, promoter_after_tss, motif_length)
+
+                            # identify position in alignment from start of found motif in unaligned sequence
+                            aligned_position = unaligned2aligned_index_dict[species][hit_loc_start]
+
+                            # materialize the window (only needed for passing hits)
                             current_frame = seq[i:i + motif_length]
-                            current_frame_score = PWM_scorer(current_frame, pwm, mononuc_pwm_dict, 'mono')
 
-                            # keep results that are above the precomputed threshold
-                            if current_frame_score >= tf_pwm_score_threshold:
-                                current_frame_score = round(current_frame_score, 2)
-
-                                pval_index = bisect_left(scores_list_sorted, current_frame_score)
-                                if pval_index >= len(pvals_scores_list_sorted):
-                                    pval_index = -1
-                                else:
-                                    pval_index -= 1
-
-                                # account for pvalues which are larger than the current largest, so that they can be distinguished appropriately in the result table.
-                                if pval_index < 0:
-                                    current_frame_score_pvalue = ">" + str(pvals_scores_list_sorted[0][0])
-                                else:
-                                    current_frame_score_pvalue = str(pvals_scores_list_sorted[pval_index][0])
-
-                                hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end = start_end_found_motif(i, strand, seq_length, promoter_after_tss, motif_length)
-
-                                # identify position in alignment from start of found motif in unaligned sequence
-                                aligned_position = unaligned2aligned_index_dict[species][hit_loc_start]
-
-                                # add to results dictionary by tf_name
-                                tfbss_found_dict[tf_name].append([current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue])
+                            # add to results dictionary by tf_name
+                            tfbss_found_dict[tf_name].append([current_frame, strand, hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end, current_frame_score, current_frame_score_pvalue])
 
     end_time = time.time()
     logging.info(" ".join(["total time for tfbs_finder() for this transcript:", str(end_time - start_time), "seconds"]))

@@ -9,8 +9,10 @@ from __future__ import annotations
 
 import math
 
+import numpy as np
 import pytest
 
+from tfbs_footprinter3.pwm import pwm_scan_sliding, seq_to_int_array
 from tfbs_footprinter3.tfbs_footprinter3 import PWM_scorer, pwm_maker
 
 # ---------- PWM_scorer ----------
@@ -131,3 +133,67 @@ class TestPwmMaker:
         # Sanity: best-case score should be >= score of a random sequence
         score_TTT = PWM_scorer("TTT", pwm, pwm_dict, "fake")
         assert score_ACA > score_TTT
+
+
+# ---------- pwm_scan_sliding (NumPy vectorized) ----------
+
+
+class TestPwmScanSliding:
+    """Vectorized scanner must agree exactly with the scalar PWM_scorer
+    at every window position — it's the hot path that replaces the
+    per-position inner Python loop in tfbs_finder.
+    """
+
+    def test_empty_when_seq_shorter_than_motif(self, pwm_dict):
+        seq_int = seq_to_int_array("AC", pwm_dict)
+        pwm_array = np.array([[1.0, 2.0, 3.0]] * 4)
+        scores = pwm_scan_sliding(seq_int, pwm_array)
+        assert scores.shape == (0,)
+
+    def test_single_window_matches_scalar(self, pwm_dict):
+        pwm = [
+            [1.0, 2.0, 3.0],
+            [0.1, 0.2, 0.3],
+            [0.01, 0.02, 0.03],
+            [-1.0, -2.0, -3.0],
+        ]
+        pwm_array = np.array(pwm, dtype=np.float64)
+        seq = "ACG"
+        expected = PWM_scorer(seq, pwm, pwm_dict, "fake")
+        scores = pwm_scan_sliding(seq_to_int_array(seq, pwm_dict), pwm_array)
+        assert scores.shape == (1,)
+        assert scores[0] == pytest.approx(expected)
+
+    def test_matches_scalar_at_every_position(self, pwm_dict):
+        """Run a realistic scan: random 200-nt sequence, 10-wide PWM.
+
+        Every vectorized score must equal PWM_scorer on the same window
+        to within float64 epsilon.
+        """
+        import random
+        rng = random.Random(42)
+        seq = "".join(rng.choice("ACGT") for _ in range(200))
+        motif_length = 10
+        pwm = [[rng.uniform(-3, 3) for _ in range(motif_length)] for _ in range(4)]
+        pwm_array = np.array(pwm, dtype=np.float64)
+
+        scores = pwm_scan_sliding(seq_to_int_array(seq, pwm_dict), pwm_array)
+
+        # Compare against scalar PWM_scorer at each window
+        expected = [
+            PWM_scorer(seq[i:i + motif_length], pwm, pwm_dict, "fake")
+            for i in range(len(seq) - motif_length + 1)
+        ]
+        assert len(scores) == len(expected)
+        np.testing.assert_allclose(scores, expected, rtol=1e-12, atol=1e-12)
+
+    def test_seq_to_int_array_maps_correctly(self, pwm_dict):
+        arr = seq_to_int_array("ACGTACGT", pwm_dict)
+        np.testing.assert_array_equal(arr, [0, 1, 2, 3, 0, 1, 2, 3])
+
+    def test_seq_to_int_array_marks_unknown_chars(self, pwm_dict):
+        arr = seq_to_int_array("AXN-", pwm_dict)
+        assert arr[0] == 0  # 'A'
+        assert arr[1] == -1  # 'X' not in dict
+        assert arr[2] == -1  # 'N' not in dict
+        assert arr[3] == -1  # '-' not in dict

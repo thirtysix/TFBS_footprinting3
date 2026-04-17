@@ -45,6 +45,23 @@ if [[ ! -s transcripts.txt ]]; then
     exit 1
 fi
 
+# Ensure Lmod / `module` is available. sbatch on Puhti can spawn a shell
+# where `module` is not a defined function, even with -l. Try the common
+# init locations; the first one present wins.
+if ! command -v module >/dev/null 2>&1; then
+    for _lmod_init in \
+        /appl/profile/zz-csc-env.sh \
+        /etc/profile.d/lmod.sh \
+        /etc/profile.d/z00_lmod.sh \
+        /usr/share/lmod/lmod/init/bash; do
+        if [[ -f "${_lmod_init}" ]]; then
+            # shellcheck disable=SC1090
+            source "${_lmod_init}"
+            break
+        fi
+    done
+fi
+
 # Python env set up by hpc/puhti/README.md one-time setup
 module load python-data/3.10
 source "${REPO_ROOT}/venv/bin/activate"

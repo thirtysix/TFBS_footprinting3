@@ -7,17 +7,14 @@ import logging
 import math
 import os
 import signal
-import socket
 
 # Libraries ####################################################################
-import sys
 import tarfile
 import textwrap
 import time
 
 import httplib2
 import matplotlib
-import msgpack
 import pandas as pd
 import wget
 from Bio import AlignIO, SeqIO
@@ -25,6 +22,22 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 
 from tfbs_footprinter3 import __version__
+
+# Public re-exports from extracted modules. These keep
+# `from tfbs_footprinter3.tfbs_footprinter3 import <func>` working for
+# existing callers (tests, hpc/, downstream users) after the monolith
+# split. When we eventually move main() into cli.py, this shim stays.
+from tfbs_footprinter3.io_utils import (  # noqa: F401
+    directory_creator,
+    distance_solve,
+    dump_json,
+    is_online,
+    load_json,
+    load_msgpack,
+    overlap_range,
+    signal_handler,
+)
+from tfbs_footprinter3.pwm import PWM_scorer, pwm_maker  # noqa: F401
 
 matplotlib.use('Agg')
 from bisect import bisect_left
@@ -220,58 +233,8 @@ def get_args():
 ################################################################################
 # House-keeping functions ######################################################
 ################################################################################
-def signal_handler(signal, frame):
-        print('You have manually stopped tfbs_footprinter3 with Ctrl+C')
-        sys.exit(0)
-
-
-def load_json(filename):
-    if os.path.exists(filename):
-        with open(filename) as open_infile:
-            return json.load(open_infile)
-    else:
-        return None
-
-
-def dump_json(filename, json_data):
-    with open(filename, 'w') as open_outfile:
-        json_data = json.dump(json_data, open_outfile)
-
-
-def load_msgpack(object_filename):
-    """unpack a msgpack file to object."""
-
-    if os.path.exists(object_filename):
-        with open(object_filename, 'rb') as object_file:
-            return msgpack.unpack(object_file, max_array_len=200000, use_list=False, strict_map_key=False)
-    else:
-        return None
-
-
-def directory_creator(directory_name):
-    """
-    Create directory if it does not already exist.
-    """
-
-    if not os.path.isdir(directory_name):
-        os.mkdir(directory_name)
-
-
-def is_online():
-    """
-    Test if the system is online.
-    This breaks when TFBS_footprinter3 outlasts Google.
-    """
-
-    REMOTE_SERVER = "www.google.com"
-    try:
-        host = socket.gethostbyname(REMOTE_SERVER)
-        s = socket.create_connection((host, 80), 2)
-        return True
-
-    except:
-        logging.info(" ".join(["System does not appear to be connected to the internet."]))
-        return False
+# signal_handler, load_json, dump_json, load_msgpack, directory_creator,
+# is_online moved to tfbs_footprinter3/io_utils.py (re-exported above).
 
 
 def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
@@ -755,71 +718,12 @@ def species_specific_data(target_species, chromosome, species_specific_data_dir)
     return species_pwm_score_threshold_df, gerp_conservation_locations_dict, species_group, cage_dict, TF_cage_dict, cage_dist_weights_dict, cage_correlations_dict, cage_corr_weights_dict, metacluster_overlap_weights_dict, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, gtex_variants, gtex_weights_dict, gtrd_metaclusters_dict, atac_seq_dict, cas_pvalues_dict
 
 
-def overlap_range(x,y):
-    """
-    Identify an overlap between two lists of two numbers.
-    """
-
-    x.sort()
-    y.sort()
-
-    return range(max(x[0], y[0]), min(x[-1], y[-1])+1)
+# overlap_range moved to io_utils; pwm_maker and PWM_scorer moved to pwm.py
+# (all re-exported above).
 
 ################################################################################
 # PWM analysis #################################################################
 ################################################################################
-#def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict, neg_bg_nuc_freq_dict):
-def pwm_maker(strand, motif_length, tf_motif, bg_nuc_freq_dict):
-    """
-    Make a PWM from a nucleotide frequency table.
-    """
-    pwm = [[],[],[],[]]
-    nuc_list = 'ACGT'
-    # PWM according to http://www.ncbi.nlm.nih.gov/pmc/articles/PMC2647310/
-    for i in range(0, motif_length):
-        col = [tf_motif[0][i], tf_motif[1][i], tf_motif[2][i], tf_motif[3][i]]
-
-        # number of sequences
-        N = sum(col)
-
-        # for each position (col) in the PFM.
-        for j in range(0, len(tf_motif)):
-
-            # nuc count at this position.
-            nuc_count = tf_motif[j][i]
-
-            # pseudo-count = sqrt(total number of samples).
-            pseudo_count = 0.8
-
-##            # background frequency for this nucleotide in the promoter.
-##            if strand == "+1":
-##                nuc_bg = bg_nuc_freq_dict[nuc_list[j]]
-##            if strand == "-1":
-##                nuc_bg = neg_bg_nuc_freq_dict[nuc_list[j]]
-
-            # background frequency for this nucleotide in the promoter.
-            nuc_bg = bg_nuc_freq_dict[nuc_list[j]]
-
-            # probability of nuc
-            nuc_probability = (nuc_count + pseudo_count/4)/(N + pseudo_count)
-            nuc_weight = math.log((nuc_probability/nuc_bg), 2)
-            pwm[j].append(nuc_weight)
-
-    pwm = pwm[:]
-
-    return pwm
-
-
-def PWM_scorer(seq, pwm, pwm_dict, pwm_type):
-    """
-    Generate score for current seq given a pwm.
-    """
-
-    seq_score = 0.0
-    for i in range(0, len(seq)):
-        seq_score += pwm[pwm_dict[seq[i:i+1]]][i]
-
-    return seq_score
 
 
 #def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, species_nt_freq_d, all_pwms_loglikelihood_dict, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc):
@@ -2105,19 +2009,7 @@ def gtex_position_translate(ens_gene_id,gtex_variants,tss,promoter_start,promote
     return converted_eqtls
 
 
-def distance_solve(r1, r2):
-     # sort the two ranges such that the range with smaller first element
-     # is assigned to x and the bigger one is assigned to y
-     r1.sort()
-     r2.sort()
-     x, y = sorted((r1, r2))
-
-     #now if x[1] lies between x[0] and y[0](x[1] != y[0] but can be equal to x[0])
-     #then the ranges are not overlapping and return the differnce of y[0] and x[1]
-     #otherwise return 0
-     if x[1] < y[0]:
-        return y[0] - x[1]
-     return 0
+# distance_solve moved to io_utils (re-exported above).
 
 
 def gerp_positions_translate(target_dir, gerp_conservation_locations_dict, chromosome, strand, promoter_start, promoter_end, tss):

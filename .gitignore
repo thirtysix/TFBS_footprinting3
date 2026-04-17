@@ -14,7 +14,9 @@ env/
 
 # Build / distribution
 build/
+dist/
 *.whl
+*.tar.gz
 
 # Test + tool output
 tfbs_results/

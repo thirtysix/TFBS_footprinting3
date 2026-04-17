@@ -41,6 +41,7 @@ hpc/cache/
 hpc/cas_scores/
 hpc/artifacts/
 hpc/transcript_lists/
+hpc/ensembl_gtfs/
 
 # Experimental data downloaded at runtime by tfbs_footprinter3 -update.
 # Only the small bundled files (pwms.json, species_nt_freq.json) live in git;

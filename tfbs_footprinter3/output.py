@@ -11,32 +11,63 @@ import csv
 from decimal import Decimal
 from operator import itemgetter
 
+_SMALL_PVAL_THRESHOLD = 0.0001
+_CSV_HEADER = [
+    'binding prot.', 'motif', 'strand', 'start', 'end',
+    'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value',
+    'combined\naffinity\nscore', 'combined\naffinity\nscore\np-value',
+    'species\nweights\nsum', 'cage\nweights\nsum', 'eqtls\nweights\nsum',
+    'atac\nweights\nsum', 'metacluster\nweights\nsum', 'cpg\nweight',
+    'corr.\nweight\nsum',
+]
+
+
+def _scientific_pvalue_if_small(s):
+    """Format a p-value string as scientific notation iff it's <= 1e-4.
+
+    Mirrors the in-place transformation the original per-row code did on
+    hit[8] and hit[10] — factored out so the hot loop is simpler.
+    """
+    if s == "" or ">" in s:
+        return s
+    if float(s) <= _SMALL_PVAL_THRESHOLD:
+        return f"{Decimal(s):.3e}"
+    return s
+
 
 def target_species_hits_table_writer(sorted_clusters_target_species_hits_list, output_table_name):
     """
     Write to table results sorted by combined affinity score.
     """
-
     with open(output_table_name, 'w') as output_table:
         writerUS = csv.writer(output_table)
-        writerUS.writerow(['binding prot.', 'motif', 'strand', 'start', 'end', 'TSS-relative start', 'TSS-relative end', 'PWM score', 'p-value', 'combined\naffinity\nscore', 'combined\naffinity\nscore\np-value', 'species\nweights\nsum', 'cage\nweights\nsum', 'eqtls\nweights\nsum', 'atac\nweights\nsum', 'metacluster\nweights\nsum', 'cpg\nweight', 'corr.\nweight\nsum'])
+        writerUS.writerow(_CSV_HEADER)
 
-        # for all results which have passed thresholds, write full result to .csv
-        # ref-point
+        if not sorted_clusters_target_species_hits_list:
+            return
 
-        if len(sorted_clusters_target_species_hits_list) > 0:
-            for hit in sorted_clusters_target_species_hits_list:
-                frame_score_pval_str = hit[8]
-                combined_affinity_score_pval_str = hit[10]
+        # Hot loop: ~2M rows at pvalc=1. Two optimizations vs the original:
+        #   (a) `str(Decimal(s))` is cached per unique p-value string because
+        #       a few p-value values repeat across millions of hits (same PWM
+        #       threshold per TF; same CAS p-value bins per TF).
+        #   (b) csv.writer.writerows internally calls str() on each cell, so
+        #       we drop the explicit `[str(x) for x in hit]` list-comp that
+        #       built one temporary list per row (~39M str() calls over the
+        #       two-transcript benchmark).
+        sci_cache = {}
 
-                if ">" not in frame_score_pval_str and frame_score_pval_str != "":
-                    if float(frame_score_pval_str) <= 0.0001:
-                        hit[8] = f"{Decimal(frame_score_pval_str):.3e}"
-                if ">" not in combined_affinity_score_pval_str and combined_affinity_score_pval_str != "":
-                    if float(combined_affinity_score_pval_str) <= 0.0001:
-                        hit[10] = f"{Decimal(combined_affinity_score_pval_str):.3e}"
+        def to_sci(s):
+            cached = sci_cache.get(s)
+            if cached is not None:
+                return cached
+            sci_cache[s] = out = _scientific_pvalue_if_small(s)
+            return out
 
-                writerUS.writerow([str(x) for x in hit])
+        for hit in sorted_clusters_target_species_hits_list:
+            hit[8] = to_sci(hit[8])
+            hit[10] = to_sci(hit[10])
+
+        writerUS.writerows(sorted_clusters_target_species_hits_list)
 
 
 def sort_target_species_hits(cluster_dict):

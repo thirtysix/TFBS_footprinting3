@@ -106,22 +106,32 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                 motif_length = len(tf_motif[0])
 
                 if motif_length > 0:
-                    # retrieve precomputed threshold and other information required for calculating the pvalue of the score
-                    tf_pwm_score_threshold_dict = pwm_score_threshold_dict[tf_name]
-                    pvals_scores_list = [[k, v] for k, v in tf_pwm_score_threshold_dict.items()]
-                    pvals_scores_list_sorted = sorted(pvals_scores_list, key=itemgetter(1))
-                    scores_list_sorted = [x[1] for x in pvals_scores_list_sorted]
-                    pvals_list = [x[0] for x in pvals_scores_list_sorted]
-                    pvals_list.sort()
+                    # Bootstrap path: when there's no precomputed PWM threshold
+                    # data for this TF (e.g. a JASPAR 2026 motif scored against
+                    # species data that was built for the 2018 catalog), we
+                    # can't assign PWM p-values to hits. Emit every position
+                    # as a hit with an empty p-value so the downstream CAS
+                    # distribution aggregator still sees every score.
+                    if tf_name in pwm_score_threshold_dict:
+                        tf_pwm_score_threshold_dict = pwm_score_threshold_dict[tf_name]
+                        pvals_scores_list = [[k, v] for k, v in tf_pwm_score_threshold_dict.items()]
+                        pvals_scores_list_sorted = sorted(pvals_scores_list, key=itemgetter(1))
+                        scores_list_sorted = [x[1] for x in pvals_scores_list_sorted]
+                        pvals_list = [x[0] for x in pvals_scores_list_sorted]
+                        pvals_list.sort()
 
-                    if pval in tf_pwm_score_threshold_dict:
-                        tf_pwm_score_threshold = tf_pwm_score_threshold_dict[pval]
-                    else:
-                        if pval == 1:
-                            tf_pwm_score_threshold = -100000
-                        else:
-                            pval = pvals_list[bisect_left(pvals_list, pval)]
+                        if pval in tf_pwm_score_threshold_dict:
                             tf_pwm_score_threshold = tf_pwm_score_threshold_dict[pval]
+                        else:
+                            if pval == 1:
+                                tf_pwm_score_threshold = -100000
+                            else:
+                                pval = pvals_list[bisect_left(pvals_list, pval)]
+                                tf_pwm_score_threshold = tf_pwm_score_threshold_dict[pval]
+                    else:
+                        pvals_scores_list_sorted = None
+                        scores_list_sorted = None
+                        tf_pwm_score_threshold = -100000
 
                     tfbss_found_dict[tf_name] = []
 
@@ -145,17 +155,20 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                             current_frame_score = float(all_scores[i])
                             current_frame_score = round(current_frame_score, 2)
 
-                            pval_index = bisect_left(scores_list_sorted, current_frame_score)
-                            if pval_index >= len(pvals_scores_list_sorted):
-                                pval_index = -1
+                            if scores_list_sorted is None:
+                                current_frame_score_pvalue = ""
                             else:
-                                pval_index -= 1
+                                pval_index = bisect_left(scores_list_sorted, current_frame_score)
+                                if pval_index >= len(pvals_scores_list_sorted):
+                                    pval_index = -1
+                                else:
+                                    pval_index -= 1
 
-                            # account for pvalues which are larger than the current largest, so that they can be distinguished appropriately in the result table.
-                            if pval_index < 0:
-                                current_frame_score_pvalue = ">" + str(pvals_scores_list_sorted[0][0])
-                            else:
-                                current_frame_score_pvalue = str(pvals_scores_list_sorted[pval_index][0])
+                                # account for pvalues which are larger than the current largest, so that they can be distinguished appropriately in the result table.
+                                if pval_index < 0:
+                                    current_frame_score_pvalue = ">" + str(pvals_scores_list_sorted[0][0])
+                                else:
+                                    current_frame_score_pvalue = str(pvals_scores_list_sorted[pval_index][0])
 
                             hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end = start_end_found_motif(i, strand, seq_length, promoter_after_tss, motif_length)
 

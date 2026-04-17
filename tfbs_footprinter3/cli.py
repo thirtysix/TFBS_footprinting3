@@ -389,7 +389,7 @@ def main():
 
                         # format - target species tf:pvalue:score
                         pwm_score_threshold_dict = {}
-                        if len(species_pwm_score_threshold_df) > 0:
+                        if species_pwm_score_threshold_df is not None and len(species_pwm_score_threshold_df) > 0:
                             pwm_score_threshold_dict = species_pwm_score_threshold_df[["tf_name", "p_value", "score"]].groupby('tf_name')[["p_value", "score"]].apply(lambda x: dict(x.to_numpy())).to_dict()
 
                         # load target tfs

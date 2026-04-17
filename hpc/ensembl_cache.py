@@ -131,14 +131,18 @@ class CachedEnsemblClient:
 
 
 def patch_tfbs_footprinter3(client: CachedEnsemblClient) -> None:
-    """Replace tfbs_footprinter3.ensemblrest with a cache-aware wrapper.
+    """Replace the Ensembl REST entry point with a cache-aware wrapper.
 
-    Call once at the top of hpc/cas_only.py (or any harness that drives
-    tfbs_footprinter3 code paths without wanting live REST hits).
+    Rebinds `tfbs_footprinter3.ensembl.ensemblrest` (the canonical
+    location) AND `tfbs_footprinter3.tfbs_footprinter3.ensemblrest`
+    (the legacy re-export). Pipeline-side callers in
+    `tfbs_footprinter3.pipeline` use attribute access
+    (`ensembl.ensemblrest(...)`) so they pick up the patch transparently.
 
-    All four call sites in tfbs_footprinter3 use output_type='json'; we
-    ignore the 'fasta' branch (dead code as of v0.0.7).
+    All known call sites use output_type='json'; the 'fasta' branch in
+    ensemblrest is dead as of v0.0.7.
     """
+    from tfbs_footprinter3 import ensembl
     from tfbs_footprinter3 import tfbs_footprinter3 as tff
 
     def _cached_ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
@@ -147,4 +151,5 @@ def patch_tfbs_footprinter3(client: CachedEnsemblClient) -> None:
             logging.info("Ensembl REST (cached): %s", full_query)
         return client.get_json(full_query)
 
+    ensembl.ensemblrest = _cached_ensemblrest
     tff.ensemblrest = _cached_ensemblrest

@@ -5,7 +5,14 @@ End-to-end recipe for running the CAS empirical-p-value build on
 100 canonical protein-coding transcripts, promoter window
 `-pb 5000 -pa 5000`, `pvalc=1` (unfiltered), parquet output.
 
-Project dir: `/scratch/project_2001307/ensembl_genomes_CAS_scoring_2018`
+**JASPAR version**: this campaign targets JASPAR 2026 (1019 vertebrates
+non-redundant PWMs). The tool on the `feat/jaspar-2026` branch ships
+`JASPAR_2026_pwms.json` and uses composite TF keys like `ARNT__MA0004.1`
+throughout. The existing S3 species tarballs are still keyed on 2018 TF
+names — the purpose of this Puhti campaign is to regenerate that data
+against JASPAR 2026 motifs, after which the tarballs get re-uploaded.
+
+Project dir: `/scratch/project_2001307/ensembl_genomes_CAS_scoring_2026`
 (referred to as `$PROJECT` below).
 
 Workflow is **workstation → Puhti → workstation**; the GTF parsing and
@@ -16,10 +23,10 @@ the per-transcript compute runs on Puhti.
 
 ```bash
 ssh barker@puhti.csc.fi
-cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2018
+cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
-# Clone the tool
-git clone https://github.com/thirtysix/TFBS_footprinting3.git
+# Clone the tool on the JASPAR 2026 branch (1019 vertebrates non-redundant PWMs)
+git clone -b feat/jaspar-2026 https://github.com/thirtysix/TFBS_footprinting3.git
 cd TFBS_footprinting3
 
 # Load a suitable Python (adjust to Puhti's current selection)
@@ -52,7 +59,7 @@ python hpc/ensembl_gtf.py \
 
 ```bash
 SPECIES=acanthochromis_polyacanthus
-PROJECT=/scratch/project_2001307/ensembl_genomes_CAS_scoring_2018
+PROJECT=/scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
 rsync hpc/transcript_lists/${SPECIES}.txt \
     barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/transcripts.txt
@@ -62,7 +69,7 @@ rsync hpc/transcript_lists/${SPECIES}.txt \
 
 ```bash
 ssh barker@puhti.csc.fi
-cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2018
+cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
 # One-time: create the per-species run dir
 mkdir -p runs/${SPECIES}

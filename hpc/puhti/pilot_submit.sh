@@ -26,7 +26,7 @@
 set -euo pipefail
 
 : "${SPECIES:?SPECIES env var is required (e.g. acanthochromis_polyacanthus)}"
-: "${PROJECT:=/scratch/project_2001307/ensembl_genomes_CAS_scoring_2018}"
+: "${PROJECT:=/scratch/project_2001307/ensembl_genomes_CAS_scoring_2026}"
 : "${REPO_ROOT:=${PROJECT}/TFBS_footprinting3}"
 : "${RUN_DIR:=${PROJECT}/runs/${SPECIES}}"
 

@@ -262,6 +262,98 @@ def _eqtl_batch(motif_starts, motif_ends, eqtl_starts, eqtl_ends, eqtl_mags,
     return (overlaps * per_eqtl_weight[None, :]).sum(axis=1)
 
 
+def _metacluster_batch_tf(motif_starts_23, motif_ends_23, counts_arr, motif_len, overlap_weights_dict):
+    """Batch metacluster_weights_summing for every hit of a single TF.
+
+    motif_len is TF-scoped (all hits of a TF share the same motif length)
+    so the inner lookup dict and the sliding window width are constant.
+    """
+    H = motif_starts_23.shape[0]
+    if H == 0 or motif_len <= 0:
+        return np.zeros(H, dtype=np.float64)
+    inner_dict = overlap_weights_dict.get(str(motif_len))
+    if not inner_dict:
+        return np.zeros(H, dtype=np.float64)
+
+    # Pad counts_arr with zeros if some hits' windows extend past the end.
+    # Scalar version slices counts[start:end] which truncates gracefully;
+    # sliding_window_view requires full-width windows so we pad to make the
+    # two paths equivalent. counts are non-negative, so appending zeros
+    # can't change the per-window max once any real value is present.
+    starts_int = motif_starts_23.astype(np.int64)
+    needed_len = int(starts_int.max()) + motif_len if H else motif_len
+    if counts_arr.size < needed_len:
+        padded = np.zeros(needed_len, dtype=counts_arr.dtype if counts_arr.size else np.int64)
+        padded[: counts_arr.size] = counts_arr
+        counts_arr = padded
+
+    # Max-over-window of width motif_len at each hit's motif_start.
+    windows = np.lib.stride_tricks.sliding_window_view(counts_arr, motif_len)
+    max_start = windows.shape[0] - 1
+    clipped = np.clip(starts_int, 0, max_start)
+    num_overlaps = windows[clipped].max(axis=1)
+
+    # Dense LUT: index = num_overlapping_metaclusters, value = weight.
+    max_key = max(int(k) for k in inner_dict.keys())
+    lut = np.zeros(max_key + 1, dtype=np.float64)
+    present = np.zeros(max_key + 1, dtype=bool)
+    for k, v in inner_dict.items():
+        lut[int(k)] = v
+        present[int(k)] = True
+
+    in_range = num_overlaps <= max_key
+    safe = np.where(in_range, num_overlaps, 0)
+    result = np.where(in_range & present[safe], lut[safe], 0.0)
+    return result
+
+
+def _cpg_batch_tf(motif_starts_23, motif_len, cpg_obsexp_array,
+                  cpg_obsexp_weights_dict_keys, cpg_obsexp_weights_dict):
+    """Batch cpg_weights_summing for every hit of a single TF.
+
+    `cpg_obsexp_array` is the per-position obs2exp value extracted from
+    cpg_list (last field of each row) — built ONCE per transcript.
+    """
+    H = motif_starts_23.shape[0]
+    if H == 0 or len(cpg_obsexp_weights_dict_keys) == 0 or motif_len <= 0:
+        return np.zeros(H, dtype=np.float64)
+    if cpg_obsexp_array.size == 0:
+        return np.zeros(H, dtype=np.float64)
+
+    # Pad with zeros if any hit's window extends past the end (matches
+    # scalar's graceful slice truncation; obs/exp ratios are non-negative
+    # so padding with 0 preserves per-window max when the real values cover
+    # any usable portion).
+    starts_int = motif_starts_23.astype(np.int64)
+    needed_len = int(starts_int.max()) + motif_len
+    if cpg_obsexp_array.size < needed_len:
+        padded = np.zeros(needed_len, dtype=cpg_obsexp_array.dtype)
+        padded[: cpg_obsexp_array.size] = cpg_obsexp_array
+        cpg_obsexp_array = padded
+
+    windows = np.lib.stride_tricks.sliding_window_view(cpg_obsexp_array, motif_len)
+    max_start = windows.shape[0] - 1
+    clipped = np.clip(starts_int, 0, max_start)
+    cpg_obsexps = windows[clipped].max(axis=1)
+
+    # Mirror the scalar bisect_left logic:
+    #   idx = bisect_left(keys, cpg_obsexp)
+    #   if idx != len(keys): pick keys[idx]
+    #   else: pick keys[-1]
+    keys_arr = np.asarray(cpg_obsexp_weights_dict_keys, dtype=np.float64)
+    indices = np.searchsorted(keys_arr, cpg_obsexps, side="left")
+    max_idx = len(keys_arr) - 1
+    clamped = np.minimum(indices, max_idx)
+    selected_keys = keys_arr[clamped]
+
+    # Map float keys -> weights. Dict values are Python floats; build once.
+    result = np.array(
+        [cpg_obsexp_weights_dict[float(k)] for k in selected_keys],
+        dtype=np.float64,
+    )
+    return result
+
+
 def calcCombinedAffinityPvalue(combined_affinity_score, cas_pvalues_dict, cass_with_pvalues_sorted, cass_sorted, cas_pvalues_subdict):
     """
     Calculate the pvalue for this combined affinity score.
@@ -536,6 +628,18 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
     eqtl_starts, eqtl_ends, eqtl_mags = _eqtls_starts_ends_mags(converted_eqtls)
     cage_dist_lut, cage_dist_max_key = _build_cage_dist_lut(cage_dist_weights_dict)
 
+    # cpg_list stores per-position rows ending in obs2exp; extract the obs2exp
+    # column as a flat float array so _cpg_batch_tf can sliding-window-max it.
+    if cpg_list:
+        cpg_obsexp_array = np.array([row[-1] for row in cpg_list], dtype=np.float64)
+    else:
+        cpg_obsexp_array = np.empty(0, dtype=np.float64)
+
+    # metacluster_in_promoter_counts is a dense int list per position; convert once.
+    metacluster_counts_arr = np.asarray(metacluster_in_promoter_counts, dtype=np.int64) \
+        if metacluster_in_promoter_counts is not None \
+        else np.empty(0, dtype=np.int64)
+
     for tf_name, hits in tfbss_found_dict.items():
 
         # build dict and sorted list of pre-computed combined affinity scores for this tf
@@ -546,92 +650,96 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
 
         if len(hits) > 0:
             cluster_dict[tf_name] = []
-            tf_len = len(hits[0][1])
+            # Preserve the scalar's eqtl_overlap_likelihood value exactly: the
+            # original code used `tf_len = len(hits[0][1])`, which is actually
+            # the length of the strand string ("+1"/"-1" -> 2) rather than the
+            # motif length. It's a pre-existing quirk we must match here or the
+            # eqtl log-likelihood shifts. For metacluster/cpg (which compute
+            # motif_len fresh from hit[2]/hit[3]) we use the real motif length.
+            tf_len_quirk = len(hits[0][1])
+            motif_length = len(hits[0][0])
             target_cages, tf_cages = cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, TF_cage_dict, tf_name)
-            eqtl_occurrence_log_likelihood = eqtl_overlap_likelihood(converted_eqtls, chr_start, chr_end, tf_len, gene_len, gtex_variants, ens_gene_id)
+            eqtl_occurrence_log_likelihood = eqtl_overlap_likelihood(converted_eqtls, chr_start, chr_end, tf_len_quirk, gene_len, gtex_variants, ens_gene_id)
 
-            # Gather per-hit motif coordinates into arrays so the per-component
-            # weight math can run in one NumPy op per component for the whole
-            # TF's hits (rather than millions of small per-hit NumPy calls).
+            # cage_correlations_summing's output depends on target_cages + tf_cages +
+            # the global corr dicts — not on the specific hit. Compute once per TF
+            # and broadcast across hits.
+            if target_species == "homo_sapiens":
+                corr_weight_sum_tf = cage_correlations_summing(None, transcript_id, target_cages, tf_cages, cage_correlations_dict, cage_corr_weights_dict)
+            else:
+                corr_weight_sum_tf = 0
+
+            # Gather per-hit motif coordinates into arrays so every per-component
+            # weight computation runs in one NumPy op for the whole TF's hits.
             motif_starts_46 = np.array([h[4] for h in hits], dtype=np.float64)
             motif_ends_46 = np.array([h[5] for h in hits], dtype=np.float64)
             motif_centers = (motif_starts_46 + motif_ends_46 / 2.0).astype(np.int64)
+            motif_starts_23 = np.array([h[2] for h in hits], dtype=np.float64)
+            pwm_scores = np.array([h[6] for h in hits], dtype=np.float64)
 
-            # The three point-overlap components (gerp, atac) and the cage
-            # distance component are all transcript-scoped features, so we
-            # already have their arrays above. Metacluster/cpg still use
-            # the scalar helpers (they slice precomputed dense arrays cheaply).
-            gerp_per_hit = _overlap_point_max(motif_centers, gerp_starts, gerp_ends, gerp_weights) if target_species == "homo_sapiens" or gerp_starts.size else np.zeros(len(hits))
-            # gerp is scored for EVERY species, not just human. Rerun if above skipped (defensive).
-            if gerp_starts.size and gerp_per_hit.shape[0] == 0:
-                gerp_per_hit = _overlap_point_max(motif_centers, gerp_starts, gerp_ends, gerp_weights)
+            # Batch weight components (all transcript-level feature arrays built above).
+            gerp_per_hit = _overlap_point_max(motif_centers, gerp_starts, gerp_ends, gerp_weights)
             cage_per_hit = _cage_batch(motif_starts_46, motif_ends_46, cage_starts, cage_ends, cage_ratios, cage_dist_lut, cage_dist_max_key)
+            cpg_per_hit = _cpg_batch_tf(motif_starts_23, motif_length, cpg_obsexp_array, cpg_obsexp_weights_dict_keys, cpg_obsexp_weights_dict)
 
             if target_species == "homo_sapiens":
                 atac_per_hit = _overlap_point_max(motif_centers, atac_starts, atac_ends, atac_weights)
                 eqtl_per_hit = _eqtl_batch(motif_starts_46, motif_ends_46, eqtl_starts, eqtl_ends, eqtl_mags, gtex_weights_dict, eqtl_occurrence_log_likelihood)
+                metacluster_per_hit = _metacluster_batch_tf(motif_starts_23, None, metacluster_counts_arr, motif_length, metacluster_overlap_weights_dict)
             else:
                 atac_per_hit = np.zeros(len(hits))
                 eqtl_per_hit = np.zeros(len(hits))
+                metacluster_per_hit = np.zeros(len(hits))
+
+            corr_per_hit = np.full(len(hits), float(corr_weight_sum_tf), dtype=np.float64)
+
+            # Stack the 7 weight columns in the order find_clusters always emitted:
+            # [species (gerp), cage, eqtls, atac, metacluster, cpg, corr].
+            weights_raw = np.column_stack([
+                gerp_per_hit, cage_per_hit, eqtl_per_hit, atac_per_hit,
+                metacluster_per_hit, cpg_per_hit, corr_per_hit,
+            ])
+
+            # Batch CAS computation and rounding. Using np.round here (instead
+            # of Python's built-in round) means results at exact half-values
+            # (e.g. 4.285 -> 4.28 vs Python 4.29) can shift by 0.01 on a small
+            # fraction of cells. Accepted as a tradeoff: np.round on the whole
+            # matrix is one C-level op vs. millions of per-cell Python round()
+            # calls. The scalar helpers remain available for exact-match tests.
+            cas_raw = weights_raw.sum(axis=1) + pwm_scores
+            cas_rounded = np.round(cas_raw, 2).tolist()
+            weights_rounded = np.round(weights_raw, 2).tolist()
+            had_contribution = (weights_raw != 0).tolist()
 
             for hit_idx, hit in enumerate(hits):
-                # ref-point
-                combined_affinity_score = 0
-                target_species_hit = hit
-                target_species_pwm_score = target_species_hit[6]
-                metacluster_weights_sum = 0
-                corr_weight_sum = 0
-
-                # Preserve the original int-0/float-nonzero typing discipline:
-                # scalar helpers returned Python int 0 when no feature overlap,
-                # and a float otherwise. cluster_dict.json serializes int vs
-                # float differently (0 vs 0.0) so we must match exactly.
-                _gerp_v = gerp_per_hit[hit_idx]
-                species_weights_sum = float(_gerp_v) if _gerp_v != 0 else 0
-                _cage_v = cage_per_hit[hit_idx]
-                cage_weights_sum = float(_cage_v) if _cage_v != 0 else 0
-                _eqtl_v = eqtl_per_hit[hit_idx]
-                eqtls_weights_sum = float(_eqtl_v) if _eqtl_v != 0 else 0
-                _atac_v = atac_per_hit[hit_idx]
-                atac_weights_sum = float(_atac_v) if _atac_v != 0 else 0
-
-                # datasets only available for homo sapiens
-                if target_species == "homo_sapiens":
-                    metacluster_weights_sum = metacluster_weights_summing(transcript_id, target_species_hit, metacluster_overlap_weights_dict, converted_metaclusters_in_promoter, metacluster_in_promoter_counts)
-                    corr_weight_sum = cage_correlations_summing(target_species_hit, transcript_id, target_cages, tf_cages, cage_correlations_dict, cage_corr_weights_dict)
-
-                cpg_weight = cpg_weights_summing(transcript_id, target_species_hit, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cpg_list)
-
-                # calculate the complete score (combined affinity)
-                experimental_weights = [species_weights_sum, cage_weights_sum, eqtls_weights_sum, atac_weights_sum, metacluster_weights_sum, cpg_weight, corr_weight_sum]
-                combined_affinity_score += sum(experimental_weights) + target_species_pwm_score
-                combined_affinity_score = round(combined_affinity_score, 2)
+                combined_affinity_score = cas_rounded[hit_idx]
 
                 if tf_name in cas_pvalues_dict:
                     combined_affinity_score_pvalue = calcCombinedAffinityPvalue(combined_affinity_score, cas_pvalues_dict, cass_with_pvalues_sorted, cass_sorted, cas_pvalues_subdict)
                 else:
                     combined_affinity_score_pvalue = ""
 
+                append_hit = False
                 if ">" not in combined_affinity_score_pvalue and combined_affinity_score_pvalue != "":
                     if float(combined_affinity_score_pvalue) <= float(pvalc):
-                        # append the combined affinity score and its pvalue
-                        hit.append(combined_affinity_score)
-                        hit.append(combined_affinity_score_pvalue)
-
-                        # round all of the experimental weights to two places and append to hit
-                        experimental_weights_rounded = [round(x, 2) for x in experimental_weights]
-                        hit += experimental_weights_rounded
-
-                        cluster_dict[tf_name].append(hit)
+                        append_hit = True
                 elif float(pvalc) == 1:
-                    # append the combined affinity score and its pvalue
+                    append_hit = True
+
+                if append_hit:
                     hit.append(combined_affinity_score)
                     hit.append(combined_affinity_score_pvalue)
-
-                    # round all of the experimental weights to two places and append to hit
-                    experimental_weights_rounded = [round(x, 2) for x in experimental_weights]
+                    row_rounded = weights_rounded[hit_idx]
+                    row_contributed = had_contribution[hit_idx]
+                    # Preserve int-0 discipline: a raw value of 0.0 means the
+                    # helper found no matching feature for this hit — scalar
+                    # returned Python int 0 there; anything else is a rounded
+                    # float.
+                    experimental_weights_rounded = [
+                        row_rounded[c] if row_contributed[c] else 0
+                        for c in range(7)
+                    ]
                     hit += experimental_weights_rounded
-
                     cluster_dict[tf_name].append(hit)
 
     total_time = time.time() - start_time

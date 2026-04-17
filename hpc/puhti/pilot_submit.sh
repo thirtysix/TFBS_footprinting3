@@ -1,5 +1,8 @@
-#!/bin/bash
+#!/bin/bash -l
 # CSC Puhti SLURM pilot submission for the non-human CAS build.
+#
+# The `-l` (login shell) is required so /etc/profile.d/* sources Lmod; the
+# default non-login SLURM shell on Puhti has no `module` command otherwise.
 #
 # Runs tfbs_footprinter3 on 100 canonical protein-coding transcripts of
 # a single species, promoter window -5kb to +5kb, pvalc=1, parquet

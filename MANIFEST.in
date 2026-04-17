@@ -1,2 +1,4 @@
 include LICENSE
 include sample_analysis/*
+include README.md
+recursive-include tfbs_footprinter3/data *.json

@@ -1,0 +1,3 @@
+ens_tid,target_tfs_filename,before TSS,after TSS,tfs to plot,pval,pval_c
+ENST00000380152,,1000,200,10,1,0.1
+ENST00000680887,jaspar_tf_ids_selected.txt,2500,2500,10,1,0.1

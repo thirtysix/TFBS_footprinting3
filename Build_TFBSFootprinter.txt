@@ -1,0 +1,38 @@
+python3 -m venv venv
+source venv/bin/activate
+pip install build
+python -m build
+
+
+
+
+# From your project root:
+deactivate
+python3 -m venv testenv
+source testenv/bin/activate
+
+# Install the built wheel or source tarball
+pip install dist/tfbs_footprinting3-0.0.7-py3-none-any.whl
+# OR
+pip install dist/TFBS_footprinting3-0.0.7.tar.gz
+
+
+pip install twine
+twine upload dist/* --repository tfbs-footprinting3  --verbose
+
+
+conda activate
+conda install conda-build anaconda-client
+anaconda login
+
+mkdir conda-recipe
+	make sure there is an up to date meta.yaml file in this directory
+conda build conda-recipe
+
+# test installation
+conda create -n test-conda-env tfbs-footprinting3 --use-local
+conda activate test-conda-env
+pip install wget
+tfbs_footprinter3 --help
+
+anaconda upload /home/harl/miniconda3/conda-bld/noarch/tfbs-footprinting3-0.0.7-py_0.conda

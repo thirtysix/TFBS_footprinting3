@@ -67,6 +67,28 @@ def _apply_sci_pval_formatting(rows):
         hit[10] = to_sci(hit[10])
 
 
+_PYARROW_MISSING_HINT = (
+    "The 'parquet' output format requires pyarrow. Install it with:\n"
+    "    pip install 'tfbs_footprinting3[parquet]'\n"
+    "or\n"
+    "    pip install pyarrow\n"
+    "Alternatively pass -of csv (the default) to keep the CSV output."
+)
+
+
+def _require_pyarrow():
+    """Raise a helpful ImportError if pyarrow is missing.
+
+    pyarrow is an optional dependency — only callers that want Parquet
+    output need to pay the ~60 MB install cost. We check here (rather
+    than at module import) so CSV users never see the error.
+    """
+    try:
+        import pyarrow  # noqa: F401 — just checking availability
+    except ImportError as exc:
+        raise ImportError(_PYARROW_MISSING_HINT) from exc
+
+
 def target_species_hits_table_writer_parquet(sorted_clusters_target_species_hits_list, output_table_name):
     """Write the sorted-clusters table as a Parquet file instead of CSV.
 
@@ -75,9 +97,12 @@ def target_species_hits_table_writer_parquet(sorted_clusters_target_species_hits
     prefers Parquet when available: faster load + smaller on-disk
     footprint × 5000 transcripts × 123 species.
 
-    Requires pyarrow; imported lazily so the CSV path has no extra dep
-    surface at startup.
+    pyarrow is an OPTIONAL dependency — install with
+    `pip install tfbs_footprinting3[parquet]` to enable this output
+    path. A missing pyarrow produces a pointed error from this function
+    rather than a cryptic pandas traceback.
     """
+    _require_pyarrow()
     import pandas as pd  # noqa: PLC0415 — lazy to keep --help cold-start fast
 
     if not sorted_clusters_target_species_hits_list:

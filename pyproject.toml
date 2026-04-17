@@ -29,14 +29,17 @@ dependencies = [
   "biopython",
   "msgpack>=1.0.5",  # pre-1.0.5 frequently fell back to the pure-Python unpacker, ~10x slower on msg files
   "wget",
-  "pandas",
-  "pyarrow>=10",  # required for the Parquet output format (-of parquet); pandas uses it as the default parquet engine
+  "pandas"
 ]
 
 [project.urls]
 Homepage = "https://github.com/thirtysix/TFBS_footprinting3"
 
 [project.optional-dependencies]
+# Parquet support for the -of/--output_format parquet option (hot path for
+# HPC runs). pyarrow isn't in the core deps because it's a ~60 MB wheel;
+# users who only need CSV output shouldn't pay that install cost.
+parquet = ["pyarrow>=10"]
 test = ["pytest>=7", "pyarrow>=10"]
 dev = ["pytest>=7", "pyarrow>=10", "ruff>=0.1"]
 

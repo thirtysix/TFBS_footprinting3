@@ -135,7 +135,7 @@ def get_args():
                         help="Write cluster_dict.json (a large internal cache of per-TF hits with CAS + weights) alongside the user-facing TFBSs_found.sortedclusters.csv. Disabled by default because this file can be 100s of MB per transcript at pvalc=1 and is only needed for re-running without recomputing. The CSV output is unaffected.")
 
     parser.add_argument('--output_format', '-of', choices=['csv', 'parquet', 'both'], default='csv',
-                        help="Format for the sorted-clusters output table. 'csv' (default) is human-readable. 'parquet' is ~10x faster to write and ~10x smaller on disk but requires pyarrow or a Parquet-aware reader; recommended for HPC/batch runs. 'both' writes both files.")
+                        help="Format for the sorted-clusters output table. 'csv' (default) is human-readable. 'parquet' is ~10x faster to write and ~10x smaller on disk but requires the optional pyarrow dep (install with: pip install 'tfbs_footprinting3[parquet]'); recommended for HPC/batch runs. 'both' writes both files.")
 
     # pre-processing the arguments
     args = parser.parse_args()

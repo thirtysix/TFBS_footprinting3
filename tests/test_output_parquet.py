@@ -148,6 +148,9 @@ def test_slim_parquet_typed(tmp_path):
     target_species_hits_table_writer_slim_parquet(slim, str(path))
     df = pd.read_parquet(path)
 
-    assert df["binding prot."].dtype == object  # stored as string
+    # pandas 2.x defaults string columns to StringDtype; older pandas uses
+    # object dtype. Both are valid — we only care that the column is
+    # string-typed, not numeric or something weird.
+    assert pd.api.types.is_string_dtype(df["binding prot."])
     assert df["PWM score"].dtype.kind == "f"
     assert df["combined affinity score"].dtype.kind == "f"

@@ -24,6 +24,7 @@ import os
 import tarfile
 import time
 
+import numpy as np
 import pandas as pd
 import wget
 
@@ -301,10 +302,28 @@ def species_specific_data(target_species, chromosome, species_specific_data_dir)
         if os.path.exists(atac_seq_chrom_dict_filename):
             atac_seq_dict = load_msgpack(atac_seq_chrom_dict_filename)
 
-    # load pre-calculated combined affinity score, by tf, p-values
+    # load pre-calculated CAS threshold table: {species}.CAS_thresholds.<jaspar>.tsv.gz
+    # Produced by hpc/puhti/build_cas_distributions.py on the campaign output.
+    # Format: header (tf_name, p_value, score) + one row per TF per target p-value
+    # grid, rows sorted p_value descending / score ascending within each TF.
+    # We ingest into {tf_name: {"scores": ndarray (asc), "pvalues": ndarray (desc)}}
+    # for searchsorted lookup in scoring.calcCombinedAffinityPvalue.
     cas_pvalues_dict = {}
-    cas_pvalues_dict_filename = os.path.join(species_specific_data_dir, ".".join(["CAS_pvalues", "0.1", "tf_ls", "json"]))
-    if os.path.exists(cas_pvalues_dict_filename):
-        cas_pvalues_dict = load_json(cas_pvalues_dict_filename)
+    cas_thresholds_candidates = sorted(
+        os.path.join(species_specific_data_dir, x)
+        for x in os.listdir(species_specific_data_dir)
+        if ".CAS_thresholds." in x and x.endswith(".tsv.gz")
+    )
+    if cas_thresholds_candidates:
+        # Pick the newest-jaspar version (lexicographic sort puts jaspar_2026
+        # after jaspar_2018 / jaspar_2024).
+        cas_thresholds_file = cas_thresholds_candidates[-1]
+        df = pd.read_csv(cas_thresholds_file, sep="\t")
+        for tf_name, grp in df.groupby("tf_name", sort=False):
+            sorted_grp = grp.sort_values("score")
+            cas_pvalues_dict[tf_name] = {
+                "scores": sorted_grp["score"].to_numpy(dtype=np.float64),
+                "pvalues": sorted_grp["p_value"].to_numpy(dtype=np.float64),
+            }
 
     return species_pwm_score_threshold_df, gerp_conservation_locations_dict, species_group, cage_dict, TF_cage_dict, cage_dist_weights_dict, cage_correlations_dict, cage_corr_weights_dict, metacluster_overlap_weights_dict, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, gtex_variants, gtex_weights_dict, gtrd_metaclusters_dict, atac_seq_dict, cas_pvalues_dict

@@ -352,26 +352,32 @@ def _cpg_batch_tf(motif_starts_23, motif_len, cpg_obsexp_array,
     return result
 
 
-def calcCombinedAffinityPvalue(combined_affinity_score, cas_pvalues_dict, cass_with_pvalues_sorted, cass_sorted, cas_pvalues_subdict):
-    """
-    Calculate the pvalue for this combined affinity score.
-    """
+def calcCombinedAffinityPvalue(combined_affinity_score, tf_thresholds):
+    """Look up the strictest supportable empirical p-value for this CAS score.
 
-    # determine the pvalue of the current combined affinity score
-    if combined_affinity_score in cas_pvalues_subdict:
-        combined_affinity_score_pvalue = str(cas_pvalues_subdict[combined_affinity_score])
-    else:
-        # index the current combined affinity score in the sorted list of scores (keys)
-        cass_with_pvalues_sorted_index = bisect_left(cass_sorted, combined_affinity_score)
-        if cass_with_pvalues_sorted_index > 0:
-            if cass_with_pvalues_sorted_index < len(cass_with_pvalues_sorted) - 1:
-                combined_affinity_score_pvalue = str(cass_with_pvalues_sorted[cass_with_pvalues_sorted_index][1])
-            else:
-                combined_affinity_score_pvalue = str(cass_with_pvalues_sorted[-1][1])
-        else:
-            combined_affinity_score_pvalue = ">" + str(cass_with_pvalues_sorted[0][1])
+    tf_thresholds is the per-TF slice of cas_pvalues_dict loaded by
+    data_loader.species_specific_data:
+        {"scores": ndarray (sorted ascending),
+         "pvalues": ndarray (parallel, descending)}
 
-    return combined_affinity_score_pvalue
+    Semantics: find the largest cutoff threshold <= query; return its
+    p_value. If the query is below the smallest cutoff, return ">P(min)"
+    so the result distinguishes "score is not significant" from a real
+    empirical p-value. If the query exceeds the largest cutoff, the
+    tightest observed p-value is returned.
+
+    This is the conservative interpretation of the cutoff table and
+    replaces the old dense-JSON bisect that took the NEXT-higher-score
+    p-value between bins. With the sparse TSV cutoff format (~130 rows
+    per TF) that old behavior overclaimed significance between bins,
+    sometimes by an order of magnitude.
+    """
+    scores = tf_thresholds["scores"]
+    pvalues = tf_thresholds["pvalues"]
+    i = int(np.searchsorted(scores, combined_affinity_score, side="right")) - 1
+    if i < 0:
+        return ">" + str(pvalues[0])
+    return str(pvalues[i])
 
 
 def eqtl_overlap_likelihood(converted_eqtls, chr_start, chr_end, tf_len, gene_len, gtex_variants, ens_gene_id):
@@ -647,11 +653,9 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
 
     for tf_name, hits in tfbss_found_dict.items():
 
-        # build dict and sorted list of pre-computed combined affinity scores for this tf
-        if tf_name in cas_pvalues_dict:
-            cass_with_pvalues_sorted = cas_pvalues_dict[tf_name]
-            cass_sorted = [x[0] for x in cass_with_pvalues_sorted]
-            cas_pvalues_subdict = {x[0]: x[1] for x in cass_with_pvalues_sorted}
+        # cas_pvalues_dict is keyed by TF; entries are {"scores": ndarray,
+        # "pvalues": ndarray}. Scoring reads from this per-TF slice below.
+        tf_thresholds = cas_pvalues_dict.get(tf_name)
 
         if len(hits) > 0:
             cluster_dict[tf_name] = []
@@ -729,8 +733,8 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
             for hit_idx, hit in enumerate(hits):
                 combined_affinity_score = cas_rounded[hit_idx]
 
-                if tf_name in cas_pvalues_dict:
-                    combined_affinity_score_pvalue = calcCombinedAffinityPvalue(combined_affinity_score, cas_pvalues_dict, cass_with_pvalues_sorted, cass_sorted, cas_pvalues_subdict)
+                if tf_thresholds is not None:
+                    combined_affinity_score_pvalue = calcCombinedAffinityPvalue(combined_affinity_score, tf_thresholds)
                 else:
                     combined_affinity_score_pvalue = ""
 

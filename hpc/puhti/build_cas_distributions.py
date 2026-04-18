@@ -1,25 +1,20 @@
 #!/usr/bin/env python3
 """Aggregate tfbs_footprinter3's native per-transcript Parquet output into
-the per-species CAS distribution artifacts.
+the per-species CAS distribution artifact.
 
 Reads: `<results_dir>/*/TFBSs_found.sortedclusters.parquet`, the layout
-tfbs_footprinter3 produces when driven with `-of parquet`.
+tfbs_footprinter3 produces when driven with `-of parquet` or
+`-of slim-parquet`.
 
-Writes two artifacts per species:
+Writes: <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2026.tsv.gz
 
-  1. <out_dir>/<species>/CAS_pvalues.0.1.tf_ls.json
-
-     The runtime lookup file `species_specific_data()` loads from the S3
-     tarball at `tfbs_footprinter3/tfbs_footprinter3.py:755`. For each
-     TF, a sorted list of (score, empirical-p-value) pairs.
-
-  2. <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2026.tsv.gz
-
-     The human-readable threshold table mirroring the published
-     `homo_sapiens.CAS_thresholds.jaspar_2026.tsv.gz`. For each TF, one
-     row per target p-value in the same grid the reference pipeline used:
-     [0.01..1.0 in 0.01 steps] + [1e-3..1e-12 decades] + a 0.1x grid
-     between them.
+    The CAS threshold table the runtime `species_specific_data()` loads
+    from the S3 tarball at `data_loader.py:306`. For each TF, one row per
+    target p-value on a fixed grid: [0.01..1.0 in 0.01 steps] + decades
+    [1e-3..1e-12] + a 0.1x subgrid between them. Rows are deduped: once
+    target p drops below the statistical floor (1/N) the max observed
+    score repeats; we keep only the first (loosest) p for each unique
+    score.
 
 Usage:
     python hpc/puhti/build_cas_distributions.py \\
@@ -31,7 +26,6 @@ from __future__ import annotations
 
 import argparse
 import gzip
-import json
 import logging
 import sys
 from pathlib import Path
@@ -151,7 +145,6 @@ def build_for_species(
 
     per_tf_scores = _load_cas_scores_per_tf(results_dir)
 
-    tf_pvalues_json: dict[str, list[list[float]]] = {}
     tsv_rows: list[tuple[str, float, float]] = []
     tfs_kept = tfs_dropped = 0
     targets = _target_p_values()
@@ -162,7 +155,6 @@ def build_for_species(
             tfs_dropped += 1
             continue
         pairs = _empirical_survival_pvalues(scores)
-        tf_pvalues_json[tf_name] = [[s, p] for s, p in pairs]
         # Drop consecutive rows that re-emit the same score under a tighter
         # target p-value (the statistical floor: once the target p is smaller
         # than 1/N we can't resolve further, so _scores_at_target_pvalues
@@ -177,16 +169,13 @@ def build_for_species(
             tsv_rows.append((tf_name, t, s))
         tfs_kept += 1
 
-    json_path = out_species_dir / "CAS_pvalues.0.1.tf_ls.json"
-    json_path.write_text(json.dumps(tf_pvalues_json))
-    logging.info("wrote %s (%d TFs)", json_path, tfs_kept)
-
     tsv_path = out_species_dir / f"{species}.CAS_thresholds.jaspar_2026.tsv.gz"
     with gzip.open(tsv_path, "wt") as f:
         f.write("tf_name\tp_value\tscore\n")
         for tf_name, p, s in tsv_rows:
             f.write(f"{tf_name}\t{p}\t{s}\n")
-    logging.info("wrote %s (%d rows)", tsv_path, len(tsv_rows))
+    logging.info("wrote %s (%d rows, %d TFs kept, %d dropped)",
+                 tsv_path, len(tsv_rows), tfs_kept, tfs_dropped)
 
     return {
         "species": species,
@@ -194,7 +183,6 @@ def build_for_species(
         "tfs_kept": tfs_kept,
         "tfs_dropped": tfs_dropped,
         "min_hits": min_hits,
-        "json": str(json_path),
         "tsv": str(tsv_path),
     }
 

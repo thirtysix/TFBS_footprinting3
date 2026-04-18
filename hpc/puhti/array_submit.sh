@@ -10,8 +10,12 @@
 #
 #   - Memory doesn't accumulate. Serial runs climb to 30+ GB over 20-odd
 #     transcripts (observed: job 34055541 OOM'd at 102.5% of 32 GB after
-#     23 transcripts). Per-transcript peak is ~7-9 GB, well inside the
-#     12 GB allocation below.
+#     23 transcripts). Per-transcript peak is ~13-14 GB (observed across
+#     all 100 array tasks in job 34059629: OOM at 12 GB, peaks of
+#     ~13.2-14.3 GB). The nested-list accumulation in tfbss_found_dict
+#     and cluster_dict is the dominant consumer -- ~20 M hits × ~400 B
+#     Python-list-row overhead. The slim-output refactor on the backlog
+#     will drop this by ~5x. For now 20 GB gives ~40% headroom.
 #
 #   - True wall-clock parallelism. With 20 concurrent tasks a 100-
 #     transcript species completes in ~30 minutes instead of ~11 hours.
@@ -37,7 +41,7 @@
 #SBATCH --partition=small
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=12G
+#SBATCH --mem=20G
 #SBATCH --time=00:45:00
 #SBATCH --array=1-100%20
 #SBATCH --output=logs/%x_%A_%a.out

@@ -71,15 +71,19 @@ rsync hpc/transcript_lists/${SPECIES}.txt \
     barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/transcripts.txt
 ```
 
-### 3. Submit the SLURM array on Puhti
+### 3. Submit the SLURM array + chained aggregator on Puhti
 
 ```bash
 ssh barker@puhti.csc.fi
 cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
-# One task per transcript, 20-way concurrent, 12 GB each.
-sbatch --export=SPECIES=${SPECIES} \
-    TFBS_footprinting3/hpc/puhti/array_submit.sh
+# One task per transcript (20-way concurrent, 8 GB each) plus an
+# aggregation job that fires automatically once the array succeeds.
+# Only the ~800 KB threshold TSV needs to leave Puhti afterwards.
+ARRAY_ID=$(sbatch --parsable --export=SPECIES=${SPECIES} \
+    TFBS_footprinting3/hpc/puhti/array_submit.sh)
+sbatch --dependency=afterok:${ARRAY_ID} --export=SPECIES=${SPECIES} \
+    TFBS_footprinting3/hpc/puhti/aggregate_submit.sh
 ```
 
 **Why an array instead of one serial job**: memory grows with each
@@ -107,27 +111,32 @@ e.g. `sbatch --array=1-100%50 …` for 50-way concurrent. Edit the
 For one-off single-transcript tests, `pilot_submit.sh` still runs the
 whole list serially; kept as a reference but not used for the campaign.
 
-### 4. Aggregate results (on workstation)
+### 4. Pull the threshold TSV back to the workstation
 
-Array tasks write into `tasks/NNN/tfbs_results/<TRANSCRIPT>(5000_5000)_1.0/`.
-The aggregator's `rglob` picks them up regardless of nesting.
+Aggregation happens on Puhti (step 3's second sbatch); only the small
+artifact needs to come back:
 
 ```bash
-# Pull the parquet shards back
+mkdir -p hpc/artifacts/${SPECIES}
+rsync barker@puhti.csc.fi:${PROJECT}/artifacts/${SPECIES}/${SPECIES}.CAS_thresholds.jaspar_2026.tsv.gz \
+    hpc/artifacts/${SPECIES}/
+```
+
+That TSV is the single runtime artifact the tool consumes. It can be
+dropped into a species' S3 tarball (`tfbs_footprinter3/data/${SPECIES}/`
+at install time) and `data_loader.py:306` will load it automatically.
+
+For QA / manual inspection of the raw parquet shards, the older
+"pull everything back" flow still works:
+
+```bash
+mkdir -p hpc/cas_scores/${SPECIES}
 rsync -a --include='*.parquet' --include='*/' --exclude='*' \
     barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/tasks/ \
     hpc/cas_scores/${SPECIES}/
-
-# Roll up into the JSON + thresholds TSV
-python hpc/puhti/build_cas_distributions.py \
-    --species ${SPECIES} \
-    --results-dir hpc/cas_scores/${SPECIES}/
+python hpc/inspect_species_results.py \
+    --results-dir hpc/cas_scores/${SPECIES} --expected-transcripts 100
 ```
-
-Produces `hpc/artifacts/${SPECIES}/CAS_pvalues.0.1.tf_ls.json` (the
-runtime lookup file) and
-`hpc/artifacts/${SPECIES}/${SPECIES}.CAS_thresholds.jaspar_2026.tsv.gz`
-(the human-readable threshold table).
 
 ## Scaling to all 316 species
 

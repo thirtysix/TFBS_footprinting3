@@ -163,7 +163,17 @@ def build_for_species(
             continue
         pairs = _empirical_survival_pvalues(scores)
         tf_pvalues_json[tf_name] = [[s, p] for s, p in pairs]
+        # Drop consecutive rows that re-emit the same score under a tighter
+        # target p-value (the statistical floor: once the target p is smaller
+        # than 1/N we can't resolve further, so _scores_at_target_pvalues
+        # pins the output to the max observed score for every decade below).
+        # Targets are iterated descending in p, so we keep the FIRST (loosest)
+        # row for each distinct score.
+        seen_scores: set[float] = set()
         for t, s in _scores_at_target_pvalues(pairs, targets):
+            if s in seen_scores:
+                continue
+            seen_scores.add(s)
             tsv_rows.append((tf_name, t, s))
         tfs_kept += 1
 

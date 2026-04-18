@@ -204,8 +204,8 @@ def species_specific_data(target_species, chromosome, species_specific_data_dir)
         cage_dict_filenames = [os.path.join(cage_data_dir, x) for x in os.listdir(cage_data_dir) if ".CAGE.peak_dict." in x and target_species in x]
         if len(cage_dict_filenames) > 0:
             cage_dict_filename = sorted(cage_dict_filenames)[-1]
-        if os.path.exists(cage_dict_filename):
-            cage_dict = load_json(cage_dict_filename)
+            if os.path.exists(cage_dict_filename):
+                cage_dict = load_json(cage_dict_filename)
 
     # load CAGE locs occuring near promoters of TFs
     TF_cage_dict = {}

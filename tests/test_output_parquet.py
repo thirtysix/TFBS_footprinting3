@@ -101,3 +101,53 @@ def test_parquet_file_is_smaller_than_equivalent_csv(tmp_path):
     target_species_hits_table_writer_parquet(rows_parquet, str(parquet_path))
 
     assert Path(parquet_path).stat().st_size < Path(csv_path).stat().st_size
+
+
+# --- Slim parquet writer -----------------------------------------------------
+
+from tfbs_footprinter3.output import (  # noqa: E402
+    target_species_hits_table_writer_slim_parquet,
+)
+
+
+def _slim_dict(items):
+    """Build the (pwm_arr, cas_arr) dict shape find_clusters produces in slim mode."""
+    import numpy as np  # noqa: PLC0415
+    return {tf: (np.asarray(pwm, dtype=np.float32),
+                 np.asarray(cas, dtype=np.float32))
+            for tf, pwm, cas in items}
+
+
+def test_slim_parquet_empty_dict(tmp_path):
+    path = tmp_path / "slim_empty.parquet"
+    target_species_hits_table_writer_slim_parquet({}, str(path))
+    df = pd.read_parquet(path)
+    assert list(df.columns) == ["binding prot.", "PWM score", "combined affinity score"]
+    assert len(df) == 0
+
+
+def test_slim_parquet_roundtrip(tmp_path):
+    path = tmp_path / "slim.parquet"
+    slim = _slim_dict([
+        ("CTCF__MA1930.2", [15.2, 14.8, 14.6], [42.7, 42.1, 41.9]),
+        ("SP1__MA0079.6", [14.1, 13.5], [39.9, 28.8]),
+    ])
+    target_species_hits_table_writer_slim_parquet(slim, str(path))
+    df = pd.read_parquet(path)
+
+    # Preserves per-TF grouping (streamed TF-by-TF, no sort)
+    assert list(df["binding prot."]) == ["CTCF__MA1930.2", "CTCF__MA1930.2", "CTCF__MA1930.2",
+                                          "SP1__MA0079.6", "SP1__MA0079.6"]
+    assert list(df["PWM score"]) == pytest.approx([15.2, 14.8, 14.6, 14.1, 13.5], rel=1e-5)
+    assert list(df["combined affinity score"]) == pytest.approx([42.7, 42.1, 41.9, 39.9, 28.8], rel=1e-5)
+
+
+def test_slim_parquet_typed(tmp_path):
+    path = tmp_path / "slim_typed.parquet"
+    slim = _slim_dict([("CTCF", [15.2], [42.7])])
+    target_species_hits_table_writer_slim_parquet(slim, str(path))
+    df = pd.read_parquet(path)
+
+    assert df["binding prot."].dtype == object  # stored as string
+    assert df["PWM score"].dtype.kind == "f"
+    assert df["combined affinity score"].dtype.kind == "f"

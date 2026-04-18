@@ -47,7 +47,11 @@ def _find_parquets(results_dir: Path) -> list[Path]:
 
 
 def _summarize_transcript(path: Path) -> dict:
-    """Compact per-transcript summary. Opens the parquet once."""
+    """Compact per-transcript summary. Opens the parquet once.
+
+    Slim parquets (3 columns: tf / PWM score / CAS score) get a subset
+    of the report with no contextual-signal nonzero rates.
+    """
     df = pd.read_parquet(path)
     # Extract transcript ID from the "<ENSAPOT…>(5000_5000)_1.0" parent dir
     transcript_id = path.parent.name.split("(")[0]
@@ -63,8 +67,11 @@ def _summarize_transcript(path: Path) -> dict:
         "pwm_max": float(df["PWM score"].max()),
     }
     for col in _CONTEXT_COLS:
-        nz = int((df[col] != 0).sum())
-        rec[f"nz_{col.replace(' ', '_')}_pct"] = round(100 * nz / len(df), 1) if len(df) else 0.0
+        if col in df.columns:
+            nz = int((df[col] != 0).sum())
+            rec[f"nz_{col.replace(' ', '_')}_pct"] = round(100 * nz / len(df), 1) if len(df) else 0.0
+        else:
+            rec[f"nz_{col.replace(' ', '_')}_pct"] = None
     return rec
 
 
@@ -72,12 +79,15 @@ def _render_transcript_table(rows: list[dict]) -> str:
     if not rows:
         return "  (no transcripts)"
     df = pd.DataFrame(rows).drop(columns=["path"])
-    # Trim to the most important columns for display
+    # Trim to the most important columns for display. Contextual-signal
+    # nonzero cols only shown if the parquet schema carried them.
     cols = ["transcript_id", "rows", "tfs", "file_mb",
-            "cas_mean", "cas_max", "pwm_max",
-            "nz_species_weights_sum_pct",  # GERP
-            "nz_cage_weights_sum_pct",
-            "nz_cpg_weight_pct"]
+            "cas_mean", "cas_max", "pwm_max"]
+    for ctx in ["nz_species_weights_sum_pct",  # GERP
+                "nz_cage_weights_sum_pct",
+                "nz_cpg_weight_pct"]:
+        if ctx in df.columns and df[ctx].notna().any():
+            cols.append(ctx)
     df = df[cols]
     return df.to_string(index=False)
 
@@ -142,20 +152,25 @@ def inspect(results_dir: Path, expected_transcripts: int | None) -> int:
     print(_render_transcript_table(records))
     print()
 
-    # Quick health flags at transcript level
+    # Quick health flags at transcript level (only where data is available)
     print("== Transcript-level health flags ==")
     small = [r for r in records if r["tfs"] < 1000]
-    zero_gerp = [r for r in records if r["nz_species_weights_sum_pct"] == 0.0]
-    zero_cpg = [r for r in records if r["nz_cpg_weight_pct"] == 0.0]
+    zero_gerp = [r for r in records if r.get("nz_species_weights_sum_pct") == 0.0]
+    zero_cpg = [r for r in records if r.get("nz_cpg_weight_pct") == 0.0]
+    slim_schema = all(r.get("nz_species_weights_sum_pct") is None for r in records)
     if small:
         print(f"  ⚠ {len(small)} transcripts with <1000 unique TFs (expected ~1019):"
               + ", ".join(r["transcript_id"] for r in small[:5]) + (" …" if len(small) > 5 else ""))
-    if zero_gerp:
-        print(f"  ⚠ {len(zero_gerp)} transcripts with 0% nonzero GERP "
-              f"(likely regions of genome with no conservation data): "
-              + ", ".join(r["transcript_id"] for r in zero_gerp[:5]) + (" …" if len(zero_gerp) > 5 else ""))
-    if zero_cpg:
-        print(f"  ⚠ {len(zero_cpg)} transcripts with 0% CpG weight")
+    if slim_schema:
+        print("  ℹ slim-parquet schema (no contextual-signal columns); "
+              "GERP/CAGE/CpG nonzero checks skipped")
+    else:
+        if zero_gerp:
+            print(f"  ⚠ {len(zero_gerp)} transcripts with 0% nonzero GERP "
+                  f"(likely regions of genome with no conservation data): "
+                  + ", ".join(r["transcript_id"] for r in zero_gerp[:5]) + (" …" if len(zero_gerp) > 5 else ""))
+        if zero_cpg:
+            print(f"  ⚠ {len(zero_cpg)} transcripts with 0% CpG weight")
     if not (small or zero_gerp or zero_cpg):
         print("  ✓ no transcript-level anomalies")
     print()

@@ -45,6 +45,7 @@ from tfbs_footprinter3.output import (
     sort_target_species_hits,
     target_species_hits_table_writer,
     target_species_hits_table_writer_parquet,
+    target_species_hits_table_writer_slim_parquet,
     top_greatest_hits,
     top_x_greatest_hits,
 )
@@ -191,8 +192,8 @@ def get_args():
     parser.add_argument('--cache_intermediates', '-ci', action="store_true",
                         help="Write cluster_dict.json (a large internal cache of per-TF hits with CAS + weights) alongside the user-facing TFBSs_found.sortedclusters.csv. Disabled by default because this file can be 100s of MB per transcript at pvalc=1 and is only needed for re-running without recomputing. The CSV output is unaffected.")
 
-    parser.add_argument('--output_format', '-of', choices=['csv', 'parquet', 'both'], default='csv',
-                        help="Format for the sorted-clusters output table. 'csv' (default) is human-readable. 'parquet' is ~10x faster to write and ~10x smaller on disk but requires the optional pyarrow dep (install with: pip install 'tfbs_footprinting3[parquet]'); recommended for HPC/batch runs. 'both' writes both files.")
+    parser.add_argument('--output_format', '-of', choices=['csv', 'parquet', 'slim-parquet', 'both'], default='csv',
+                        help="Format for the sorted-clusters output table. 'csv' (default) is human-readable. 'parquet' is ~10x faster to write and ~10x smaller on disk but requires the optional pyarrow dep (install with: pip install 'tfbs_footprinting3[parquet]'); recommended for HPC/batch runs. 'slim-parquet' writes only (binding prot., PWM score, combined affinity score) and skips the full list-of-hits accumulation — designed for the non-human CAS-distribution campaign; cuts per-transcript peak memory from ~20 GB to ~4 GB and disables plotting / CSV / full parquet for the same run. 'both' writes CSV + full parquet.")
 
     # pre-processing the arguments
     args = parser.parse_args()
@@ -351,7 +352,7 @@ def main():
                 sortedclusters_csv_filename = os.path.join(target_dir, "TFBSs_found.sortedclusters.csv")
                 sortedclusters_parquet_filename = os.path.join(target_dir, "TFBSs_found.sortedclusters.parquet")
                 # The resume check keys off whichever format(s) were requested.
-                if output_format == "parquet":
+                if output_format in ("parquet", "slim-parquet"):
                     sortedclusters_table_filename = sortedclusters_parquet_filename
                 else:
                     sortedclusters_table_filename = sortedclusters_csv_filename
@@ -437,6 +438,20 @@ def main():
                             # Decide whether to (re)compute or load an existing cluster_dict.
                             # With caching on: load from cluster_dict.json when it exists.
                             # Without caching: always recompute (the file won't be there).
+                            slim_mode = output_format == "slim-parquet"
+                            # slim mode bypasses cluster_dict entirely: no sort, no
+                            # list-of-lists accumulation, no pandas, no plotting.
+                            # find_clusters returns a dict of (pwm_arr, cas_arr) per TF
+                            # and the slim writer streams that directly to parquet.
+                            if slim_mode:
+                                tfbss_found_dict = tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, target_dir, pwm_score_threshold_dict, species_nt_freq_d, unaligned2aligned_index_dict, promoter_after_tss, pval, pvalc)
+                                slim_cluster_dict = find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_species, chromosome, tfbss_found_dict, cleaned_aligned_filename, converted_gerps_in_promoter, converted_cages, converted_metaclusters_in_promoter, metacluster_in_promoter_counts, converted_atac_seqs_in_promoter, converted_eqtls, gtex_weights_dict, transcript_id, cage_dict, TF_cage_dict, cage_dist_weights_dict, metacluster_overlap_weights_dict, cpg_list, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cage_correlations_dict, cage_corr_weights_dict, gtex_variants, gene_len, cas_pvalues_dict, pvalc, slim=True)
+                                tfbss_found_dict.clear()
+                                target_species_hits_table_writer_slim_parquet(slim_cluster_dict, sortedclusters_parquet_filename)
+                                # Done with this transcript: skip the sorted-hits /
+                                # plotting machinery entirely.
+                                continue
+
                             can_load_cluster = cache_intermediates and os.path.exists(cluster_dict_filename) and os.path.exists(sortedclusters_table_filename)
                             if not can_load_cluster:
                                 # score alignment for tfbss

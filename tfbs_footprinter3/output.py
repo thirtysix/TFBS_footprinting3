@@ -11,6 +11,8 @@ import csv
 from decimal import Decimal
 from operator import itemgetter
 
+import numpy as np
+
 _SMALL_PVAL_THRESHOLD = 0.0001
 _CSV_HEADER = [
     'binding prot.', 'motif', 'strand', 'start', 'end',
@@ -126,6 +128,66 @@ def target_species_hits_table_writer_parquet(sorted_clusters_target_species_hits
         df[col] = df[col].astype("float64")
 
     df.to_parquet(output_table_name, engine="pyarrow", compression="snappy", index=False)
+
+
+def target_species_hits_table_writer_slim_parquet(slim_cluster_dict, output_table_name):
+    """Write a 3-column (tf_name, PWM score, combined affinity score) parquet.
+
+    Purpose: the non-human CAS campaign (see hpc/puhti/) only needs the CAS
+    score distribution per TF to build empirical p-value tables. The full
+    18-column `sortedclusters` table is ~320 MB per transcript and
+    requires building a pandas DataFrame + python list-of-lists of 20 M
+    rows, which peaks at ~20 GB of process memory. The slim path skips
+    that entire accumulation: it receives per-TF numpy arrays directly
+    from find_clusters and streams them TF-by-TF into a pyarrow parquet
+    via ParquetWriter, so peak memory is bounded by one TF's arrays.
+
+    slim_cluster_dict: dict {tf_name: (pwm_scores_ndarray, cas_rounded_ndarray)}
+    output_table_name: path to the output parquet.
+
+    Schema matches the subset of _PARQUET_HEADER that hpc/puhti/build_cas_distributions.py
+    actually reads (`binding prot.`, `combined affinity score`), plus PWM
+    score for QC. No p-value columns (would all be empty in campaign mode).
+    """
+    _require_pyarrow()
+    import pyarrow as pa  # noqa: PLC0415
+    import pyarrow.parquet as pq  # noqa: PLC0415
+
+    schema = pa.schema([
+        ("binding prot.", pa.string()),
+        ("PWM score", pa.float32()),
+        ("combined affinity score", pa.float32()),
+    ])
+
+    writer = pq.ParquetWriter(output_table_name, schema, compression="snappy")
+    try:
+        if not slim_cluster_dict:
+            # Write a single empty batch so readers see a valid empty parquet.
+            writer.write_table(pa.Table.from_arrays(
+                [pa.array([], type=pa.string()),
+                 pa.array([], type=pa.float32()),
+                 pa.array([], type=pa.float32())],
+                schema=schema,
+            ))
+            return
+
+        for tf_name, (pwm_arr, cas_arr) in slim_cluster_dict.items():
+            n = int(pwm_arr.size)
+            if n == 0:
+                continue
+            # pa.array copies the numpy buffer once; cheaper than pandas
+            # roundtrip and doesn't double-materialize into a list.
+            table_chunk = pa.Table.from_arrays(
+                [
+                    pa.array([tf_name] * n, type=pa.string()),
+                    pa.array(pwm_arr.astype(np.float32), type=pa.float32()),
+                    pa.array(cas_arr.astype(np.float32), type=pa.float32()),
+                ],
+                schema=schema,
+            )
+            writer.write_table(table_chunk)
+    finally:
+        writer.close()
 
 
 def target_species_hits_table_writer(sorted_clusters_target_species_hits_list, output_table_name):

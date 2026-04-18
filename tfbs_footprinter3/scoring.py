@@ -604,16 +604,23 @@ def cpg_weights_summing(transcript_id, target_species_hit, cpg_obsexp_weights_di
         return 0
 
 
-def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_species, chromosome, tfbss_found_dict, cleaned_aligned_filename, converted_gerps_in_promoter, converted_cages, converted_metaclusters_in_promoter, metacluster_in_promoter_counts, converted_atac_seqs_in_promoter, converted_eqtls, gtex_weights_dict, transcript_id, cage_dict, TF_cage_dict, cage_dist_weights_dict, metacluster_overlap_weights_dict, cpg_list, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cage_correlations_dict, cage_corr_weights_dict, gtex_variants, gene_len, cas_pvalues_dict, pvalc):
+def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_species, chromosome, tfbss_found_dict, cleaned_aligned_filename, converted_gerps_in_promoter, converted_cages, converted_metaclusters_in_promoter, metacluster_in_promoter_counts, converted_atac_seqs_in_promoter, converted_eqtls, gtex_weights_dict, transcript_id, cage_dict, TF_cage_dict, cage_dist_weights_dict, metacluster_overlap_weights_dict, cpg_list, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, cage_correlations_dict, cage_corr_weights_dict, gtex_variants, gene_len, cas_pvalues_dict, pvalc, slim=False):
     """
     For each target species hit:
     Identify the highest score for each species within the locality threshold.
     Create combined affinity score from the target species hit and those best scores from each species.
     If two target species hits are within the locality threshold from one another, choose the hit which has the highest combined affinity score.
+
+    When slim=True (used by the HPC CAS campaign), skip building cluster_dict
+    of per-hit rows entirely and return a dict tf_name -> (pwm_scores_ndarray,
+    cas_rounded_ndarray). This cuts peak memory on a 20 M-hit transcript from
+    ~20 GB to ~4 GB by avoiding the Python list-of-lists accumulation and
+    downstream pandas DataFrame materialization.
     """
     start_time = time.time()
 
     cluster_dict = {}
+    slim_cluster_dict = {}  # tf_name -> (pwm_scores_ndarray, cas_rounded_ndarray); only populated when slim=True
 
     # Pre-build NumPy arrays of feature (start, end, weight) triples ONCE.
     # These are transcript-scoped (not per-TF) so the cost is amortized across
@@ -705,6 +712,16 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
             # matrix is one C-level op vs. millions of per-cell Python round()
             # calls. The scalar helpers remain available for exact-match tests.
             cas_raw = weights_raw.sum(axis=1) + pwm_scores
+
+            if slim:
+                # Keep CAS rounding consistent with the full path (which applies
+                # np.round for the human-readable output) but store as ndarray, not list.
+                # pvalc filtering skipped: the campaign always runs pvalc=1, and the
+                # slim path is not exposed to end-users who need sub-1 filtering.
+                slim_cluster_dict[tf_name] = (pwm_scores.astype(np.float32, copy=False),
+                                              np.round(cas_raw, 2).astype(np.float32))
+                continue
+
             cas_rounded = np.round(cas_raw, 2).tolist()
             weights_rounded = np.round(weights_raw, 2).tolist()
             had_contribution = (weights_raw != 0).tolist()
@@ -743,4 +760,6 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
     total_time = time.time() - start_time
     logging.info(" ".join(["total time for find_clusters() for this transcript:", str(total_time), "seconds"]))
 
+    if slim:
+        return slim_cluster_dict
     return cluster_dict

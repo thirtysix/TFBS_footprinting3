@@ -1,0 +1,10 @@
+mus_musculus
+rattus_norvegicus
+canis_lupus_familiaris
+sus_scrofa
+monodelphis_domestica
+ornithorhynchus_anatinus
+gallus_gallus
+anolis_carolinensis
+xenopus_tropicalis
+danio_rerio

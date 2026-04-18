@@ -138,22 +138,61 @@ python hpc/inspect_species_results.py \
     --results-dir hpc/cas_scores/${SPECIES} --expected-transcripts 100
 ```
 
-## Scaling to all 316 species
+## Batch mode (multiple species at once)
 
-Once the pilot for one species validates end-to-end, the same recipe
-drives all 316 — just run step 1 in batch mode (`--species-file
-/path/to/species_list.txt`) and step 3 once per species (or wrap in
-a SLURM job array that iterates over species).
+A small wrapper sbatches array + aggregate pairs for every species in a
+list. Intended for scaling up: first a 10-species test, then the full
+316 once that's validated.
 
-Projected cost (based on local benchmarking, with pvalc=1, 10kb window,
-parquet output, Ensembl prefetch cache):
+1. **Workstation**: generate all transcript lists in one call
+   ```bash
+   python hpc/ensembl_gtf.py --species-file hpc/species_lists/test10.txt \
+       --n 100 --max-chromosomes 10 --resume
+   ```
+
+2. **Workstation → Puhti**: push each species' transcripts.txt into its
+   run dir (both sides get created on first use)
+   ```bash
+   while IFS= read -r SP; do
+       [[ -z "${SP}" || "${SP:0:1}" == "#" ]] && continue
+       ssh barker@puhti.csc.fi "mkdir -p ${PROJECT}/runs/${SP}"
+       rsync hpc/transcript_lists/${SP}.txt \
+           barker@puhti.csc.fi:${PROJECT}/runs/${SP}/transcripts.txt
+   done < hpc/species_lists/test10.txt
+   ```
+
+3. **Puhti**: submit all species' paired jobs via the batch wrapper
+   ```bash
+   ssh barker@puhti.csc.fi
+   cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
+   cd TFBS_footprinting3 && git pull && cd ..
+   bash TFBS_footprinting3/hpc/puhti/submit_batch.sh \
+       TFBS_footprinting3/hpc/species_lists/test10.txt
+   ```
+   Each species gets its own array + chained aggregate pair. With
+   `%20` in-array concurrency × N species, peak concurrent tasks is
+   `20 × N` — fine on Puhti's `small` partition for the 10-species
+   test; drop the `%20` in array_submit.sh if you want to be gentler
+   for the 316 run.
+
+4. **Monitor**: `squeue -u $USER`. A completed species produces
+   `${PROJECT}/artifacts/${SPECIES}/${SPECIES}.CAS_thresholds.jaspar_2026.tsv.gz`.
+
+5. **Pull artifacts back (single rsync for everything)**
+   ```bash
+   mkdir -p hpc/artifacts && rsync -a \
+       barker@puhti.csc.fi:${PROJECT}/artifacts/ hpc/artifacts/
+   ```
+
+Projected cost for the full 316-species run, assuming this 10-species
+test confirms ~6-min/task wall and ~4-GB/task peak:
 
 | | per species | all 316 |
 |---|---|---|
-| CPU-time | ~1 h (100 transcripts × 35 s) | ~316 h |
-| Wall @ 10-way SLURM array per species | ~6 min | hours |
-| Disk (parquet) | ~5 GB | ~1.6 TB |
-| CAS_pvalues JSON uploaded to S3 | ~MB | ~GB total |
+| CPU-time | ~10 h (100 tasks × ~6 min) | ~3,200 h |
+| Wall @ 20-way in-array concurrency | ~30 min | ~1-2 days (many species in parallel) |
+| Puhti scratch (parquet + logs) | ~9 GB | ~2.9 TB |
+| **Artifact back to workstation** | **~800 KB TSV** | **~250 MB total** |
 
 ## Notes
 

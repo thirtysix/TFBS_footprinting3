@@ -104,15 +104,13 @@ def _ranges_gap(a_start, a_end, b_starts, b_ends):
 def gerp_weights_summing_v(motif_start, motif_end, gerp_starts, gerp_ends, gerp_weights):
     """Vectorized drop-in replacement for gerp_weights_summing (per-hit).
 
-    Original used motif_center = int(motif_start + motif_end / 2) which is
-    a point; preserve that exactly. Takes max weight across gerps whose
-    range overlaps that point. Kept for unit testing against the scalar
-    reference; find_clusters uses the batched variant `_gerp_batch` below
-    for performance.
+    Takes max weight across gerps whose range overlaps the motif center.
+    Kept for unit testing against the scalar reference; find_clusters
+    uses the batched variant `_overlap_point_max` below for performance.
     """
     if gerp_starts.size == 0:
         return 0
-    motif_center = int(motif_start + motif_end / 2)
+    motif_center = int((motif_start + motif_end) / 2)
     overlaps = _ranges_overlap(motif_center, motif_center + 1, gerp_starts, gerp_ends)
     if not overlaps.any():
         return 0
@@ -123,7 +121,7 @@ def atac_weights_summing_v(motif_start, motif_end, atac_starts, atac_ends, atac_
     """Vectorized atac_weights_summing (per-hit, test reference)."""
     if atac_starts.size == 0:
         return 0
-    motif_center = int(motif_start + motif_end / 2)
+    motif_center = int((motif_start + motif_end) / 2)
     overlaps = _ranges_overlap(motif_center, motif_center + 1, atac_starts, atac_ends)
     if not overlaps.any():
         return 0
@@ -506,7 +504,7 @@ def atac_weights_summing(transcript_id, target_species_hit, converted_atac_seqs_
     # ref-point
     motif_start = target_species_hit[4]
     motif_end = target_species_hit[5]
-    motif_center = int(motif_start + motif_end / 2)
+    motif_center = int((motif_start + motif_end) / 2)
 
     for converted_atac_in_promoter in converted_atac_seqs_in_promoter:
         converted_atac_in_promoter_start = converted_atac_in_promoter[0]
@@ -558,7 +556,7 @@ def gerp_weights_summing(target_species, transcript_id, chromosome, target_speci
     # ref-point
     motif_start = target_species_hit[4]
     motif_end = target_species_hit[5]
-    motif_center = int(motif_start + motif_end / 2)
+    motif_center = int((motif_start + motif_end) / 2)
 
     gerp_weights_sum = 0
     gerp_weights_ls = []
@@ -673,7 +671,7 @@ def find_clusters(gene_name, ens_gene_id, chr_start, chr_end, alignment, target_
             # weight computation runs in one NumPy op for the whole TF's hits.
             motif_starts_46 = np.array([h[4] for h in hits], dtype=np.float64)
             motif_ends_46 = np.array([h[5] for h in hits], dtype=np.float64)
-            motif_centers = (motif_starts_46 + motif_ends_46 / 2.0).astype(np.int64)
+            motif_centers = ((motif_starts_46 + motif_ends_46) / 2.0).astype(np.int64)
             motif_starts_23 = np.array([h[2] for h in hits], dtype=np.float64)
             pwm_scores = np.array([h[6] for h in hits], dtype=np.float64)
 

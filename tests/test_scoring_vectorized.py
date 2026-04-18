@@ -61,13 +61,14 @@ class TestGerpVectorized:
 
     def test_max_across_overlapping(self):
         hit = _motif_hit(100, 110)
-        # motif_center = int(100 + 110/2) = 155 -- scalar uses that weird formula.
-        # Make several features overlap and verify max-selection.
-        features = [[150, 160, 1.0], [150, 160, 3.0], [100, 200, 2.0]]
+        # motif_center = int((100 + 110) / 2) = 105. Overlapping features
+        # must span 105; pick several to verify max-selection.
+        features = [[100, 110, 1.0], [102, 108, 3.0], [100, 200, 2.0]]
         scalar = gerp_weights_summing("homo_sapiens", "tid", "1", hit, features)
         s, e, w = _features_to_arrays(features)
         vec = gerp_weights_summing_v(100, 110, s, e, w)
         assert vec == pytest.approx(scalar)
+        assert vec == 3.0
 
 
 class TestAtacVectorized:

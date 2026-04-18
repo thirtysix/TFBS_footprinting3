@@ -312,7 +312,7 @@ def main():
         if experimental_data_present:
             if len(args_lists) > 0:
                 # load mono-nuc PFMs
-                TFBS_matrix_filename = os.path.join(script_dir, 'data/pwms.json')
+                TFBS_matrix_filename = os.path.join(script_dir, 'data/JASPAR_2026_pwms.json')
                 TFBS_matrix_dict = load_json(TFBS_matrix_filename)
                 TFBS_matrix_dict = {k.upper(): v for k, v in TFBS_matrix_dict.items()}
 
@@ -389,7 +389,7 @@ def main():
 
                         # format - target species tf:pvalue:score
                         pwm_score_threshold_dict = {}
-                        if len(species_pwm_score_threshold_df) > 0:
+                        if species_pwm_score_threshold_df is not None and len(species_pwm_score_threshold_df) > 0:
                             pwm_score_threshold_dict = species_pwm_score_threshold_df[["tf_name", "p_value", "score"]].groupby('tf_name')[["p_value", "score"]].apply(lambda x: dict(x.to_numpy())).to_dict()
 
                         # load target tfs

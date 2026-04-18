@@ -13,10 +13,10 @@ Writes two artifacts per species:
      tarball at `tfbs_footprinter3/tfbs_footprinter3.py:755`. For each
      TF, a sorted list of (score, empirical-p-value) pairs.
 
-  2. <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2018.tsv.gz
+  2. <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2026.tsv.gz
 
      The human-readable threshold table mirroring the published
-     `homo_sapiens.CAS_thresholds.jaspar_2018.tsv.gz`. For each TF, one
+     `homo_sapiens.CAS_thresholds.jaspar_2026.tsv.gz`. For each TF, one
      row per target p-value in the same grid the reference pipeline used:
      [0.01..1.0 in 0.01 steps] + [1e-3..1e-12 decades] + a 0.1x grid
      between them.
@@ -171,7 +171,7 @@ def build_for_species(
     json_path.write_text(json.dumps(tf_pvalues_json))
     logging.info("wrote %s (%d TFs)", json_path, tfs_kept)
 
-    tsv_path = out_species_dir / f"{species}.CAS_thresholds.jaspar_2018.tsv.gz"
+    tsv_path = out_species_dir / f"{species}.CAS_thresholds.jaspar_2026.tsv.gz"
     with gzip.open(tsv_path, "wt") as f:
         f.write("tf_name\tp_value\tscore\n")
         for tf_name, p, s in tsv_rows:

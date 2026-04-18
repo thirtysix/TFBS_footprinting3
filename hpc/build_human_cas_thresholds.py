@@ -3,7 +3,7 @@
 into the single gzipped artifact the tool will load at runtime.
 
 Reads:  <summaries_dir>/*.CAS_pvalue_score.tsv
-Writes: <out_dir>/homo_sapiens/homo_sapiens.CAS_thresholds.jaspar_2018.tsv.gz
+Writes: <out_dir>/homo_sapiens/homo_sapiens.CAS_thresholds.jaspar_2024.tsv.gz
 
 Each input TSV already carries `tf_name\tp_value\tscore` rows across the
 same p-value grid that hpc/puhti/build_cas_distributions.py emits for
@@ -32,7 +32,7 @@ def build(summaries_dir: Path, out_dir: Path) -> dict:
 
     out_species_dir = out_dir / "homo_sapiens"
     out_species_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_species_dir / "homo_sapiens.CAS_thresholds.jaspar_2018.tsv.gz"
+    out_path = out_species_dir / "homo_sapiens.CAS_thresholds.jaspar_2024.tsv.gz"
 
     rows_written = 0
     with gzip.open(out_path, "wt") as out:

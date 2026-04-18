@@ -55,7 +55,7 @@ def experimentalDataUpdater(exp_data_update):
 
     # if the data dir exists, check to see that all of the required file patterns are present
     else:
-        required_data_file_patterns = ["pwms.json"]
+        required_data_file_patterns = ["JASPAR_2026_pwms.json"]
         experimental_data_filenames = [x for x in os.listdir(experimental_data_dir) if os.path.isfile(os.path.join(experimental_data_dir, x))]
         all_patterns_matched = all([any([required_data_file_pattern in experimental_data_filename
                                           for experimental_data_filename in experimental_data_filenames])

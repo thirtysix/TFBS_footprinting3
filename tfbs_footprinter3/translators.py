@@ -264,8 +264,12 @@ def gerp_positions_translate(target_dir, gerp_conservation_locations_dict, chrom
             converted_gerp_start = (tss - gerp_start) * -1
             converted_gerp_end = (tss - gerp_end) * -1
         if strand == -1:
-            converted_gerp_start = (tss - gerp_start)
-            converted_gerp_end = (tss - gerp_end)
+            # gerp_end = gerp_start + length (genomic), so gerp_end > gerp_start.
+            # For reverse-strand genes we need to swap so the converted range
+            # still has start <= end; otherwise downstream overlap checks
+            # (which test max(point, start) <= min(point+1, end)) always fail.
+            converted_gerp_start = (tss - gerp_end)
+            converted_gerp_end = (tss - gerp_start)
 
         converted_gerp = [converted_gerp_start, converted_gerp_end, gerp_weight]
         converted_gerps_in_promoter.append(converted_gerp)
@@ -404,8 +408,10 @@ def atac_pos_translate(atac_seq_dict, chromosome, strand, promoter_start, promot
             converted_atac_seq_start = (tss - atac_seq_start) * -1
             converted_atac_seq_end = (tss - atac_seq_end) * -1
         if strand == -1:
-            converted_atac_seq_start = (tss - atac_seq_start)
-            converted_atac_seq_end = (tss - atac_seq_end)
+            # Swap so start <= end after conversion; see the matching comment
+            # in gerp_positions_translate above.
+            converted_atac_seq_start = (tss - atac_seq_end)
+            converted_atac_seq_end = (tss - atac_seq_start)
 
         converted_atac_seq = [converted_atac_seq_start, converted_atac_seq_end, atac_seq_weight]
         converted_atac_seqs_in_promoter.append(converted_atac_seq)

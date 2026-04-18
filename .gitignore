@@ -42,11 +42,13 @@ hpc/cas_scores/
 hpc/artifacts/
 hpc/transcript_lists/
 hpc/ensembl_gtfs/
+hpc/jaspar_2026/
 
 # Experimental data downloaded at runtime by tfbs_footprinter3 -update.
-# Only the small bundled files (pwms.json, species_nt_freq.json) live in git;
+# Only the small bundled JASPAR motif + nt-frequency files live in git;
 # everything else under tfbs_footprinter3/data/ is fetched from S3 on first run
 # and must NEVER be committed (can easily be >1 GB per species).
 tfbs_footprinter3/data/*
 !tfbs_footprinter3/data/pwms.json
+!tfbs_footprinter3/data/JASPAR_2026_pwms.json
 !tfbs_footprinter3/data/species_nt_freq.json

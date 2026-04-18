@@ -27,6 +27,12 @@ sample_analysis/tfbs_results/
 .coverage
 htmlcov/
 
+# SLURM output files pulled back from Puhti for inspection
+tfbs_cas_*.out
+tfbs_cas_*.err
+tfbs_cas_pilot_*.out
+tfbs_cas_pilot_*.err
+
 # Editor / OS
 .Rhistory
 .DS_Store

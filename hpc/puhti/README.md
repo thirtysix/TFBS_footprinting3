@@ -71,45 +71,63 @@ rsync hpc/transcript_lists/${SPECIES}.txt \
     barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/transcripts.txt
 ```
 
-### 3. Submit the SLURM job on Puhti
+### 3. Submit the SLURM array on Puhti
 
 ```bash
 ssh barker@puhti.csc.fi
 cd /scratch/project_2001307/ensembl_genomes_CAS_scoring_2026
 
-# Launch (per-species run dir already created by step 2)
+# One task per transcript, 20-way concurrent, 12 GB each.
 sbatch --export=SPECIES=${SPECIES} \
-    TFBS_footprinting3/hpc/puhti/pilot_submit.sh
+    TFBS_footprinting3/hpc/puhti/array_submit.sh
 ```
 
-**Edit `pilot_submit.sh`'s `#SBATCH` header first** for the billing
-project and partition on your account. The defaults in this repo are
-placeholders.
+**Why an array instead of one serial job**: memory grows with each
+transcript processed in a single Python process (observed: job 34055541
+reached 32.8 GB after 23 transcripts and OOM'd). A per-transcript task
+peaks at ~7-9 GB and avoids the accumulation, so 12 GB × 100 concurrent
+is cheaper than 32 GB serial. Array also gives true parallelism: a
+100-transcript species finishes in ~30 min wall instead of ~11 h.
 
-The job:
+The array:
 
-* creates `$PROJECT/runs/$SPECIES/` as the working directory
-* runs `tfbs_footprinter3` on the 100 transcripts with
-  `-pb 5000 -pa 5000 -p 1 -pc 1 -no -of parquet`
-* experimental data for the species is auto-downloaded on first run
-  from `s3://tfbssexperimentaldata/${SPECIES}.tar.gz` — no manual copy
-  required
+* creates `$PROJECT/runs/$SPECIES/tasks/NNN/` per task so concurrent
+  `TFBS_footprinter3.log` writes don't interleave
+* picks transcript N from line N of `transcripts.txt`
+* runs `tfbs_footprinter3 -t <one-line file> -pb 5000 -pa 5000 -p 1 -pc 1 -no -of parquet`
+* species experimental data is auto-downloaded on first task from
+  `s3://tfbssexperimentaldata/${SPECIES}.tar.gz`
+
+Defaults are `--array=1-100%20`, `--mem=12G`, `--time=00:45:00`. Override
+on the command line for a different transcript count or concurrency —
+e.g. `sbatch --array=1-100%50 …` for 50-way concurrent. Edit the
+`#SBATCH --account=` line for your billing project if you're not on
+`project_2001307`.
+
+For one-off single-transcript tests, `pilot_submit.sh` still runs the
+whole list serially; kept as a reference but not used for the campaign.
 
 ### 4. Aggregate results (on workstation)
+
+Array tasks write into `tasks/NNN/tfbs_results/<TRANSCRIPT>(5000_5000)_1.0/`.
+The aggregator's `rglob` picks them up regardless of nesting.
 
 ```bash
 # Pull the parquet shards back
 rsync -a --include='*.parquet' --include='*/' --exclude='*' \
-    barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/tfbs_results/ \
+    barker@puhti.csc.fi:${PROJECT}/runs/${SPECIES}/tasks/ \
     hpc/cas_scores/${SPECIES}/
 
-# Roll up into the CAS p-value JSON + thresholds TSV
-python hpc/build_cas_pvalues.py --species ${SPECIES}
+# Roll up into the JSON + thresholds TSV
+python hpc/puhti/build_cas_distributions.py \
+    --species ${SPECIES} \
+    --results-dir hpc/cas_scores/${SPECIES}/
 ```
 
-Produces `hpc/artifacts/${SPECIES}/CAS_pvalues.0.1.tf_ls.json` in the
-exact format consumed by `tfbs_footprinter3.py:755`
-(`species_specific_data` loads it on startup for that species).
+Produces `hpc/artifacts/${SPECIES}/CAS_pvalues.0.1.tf_ls.json` (the
+runtime lookup file) and
+`hpc/artifacts/${SPECIES}/${SPECIES}.CAS_thresholds.jaspar_2026.tsv.gz`
+(the human-readable threshold table).
 
 ## Scaling to all 316 species
 

@@ -151,11 +151,13 @@ list. Intended for scaling up: first a 10-species test, then the full
    ```
 
 2. **Workstation → Puhti**: push each species' transcripts.txt into its
-   run dir (both sides get created on first use)
+   run dir (both sides get created on first use). `ssh -n` is required
+   inside the loop — without it, ssh inherits the loop's stdin and
+   swallows the rest of the species list after the first iteration.
    ```bash
    while IFS= read -r SP; do
        [[ -z "${SP}" || "${SP:0:1}" == "#" ]] && continue
-       ssh barker@puhti.csc.fi "mkdir -p ${PROJECT}/runs/${SP}"
+       ssh -n barker@puhti.csc.fi "mkdir -p ${PROJECT}/runs/${SP}"
        rsync hpc/transcript_lists/${SP}.txt \
            barker@puhti.csc.fi:${PROJECT}/runs/${SP}/transcripts.txt
    done < hpc/species_lists/test10.txt

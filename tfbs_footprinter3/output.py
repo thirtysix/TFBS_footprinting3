@@ -225,9 +225,13 @@ def sort_target_species_hits(cluster_dict):
         for hit in hits:
             sorted_clusters_target_species_hits_list.append([tf_name] + hit)
 
-    # ref-point
+    # Sort most-significant first. CAS p-value (index 10) is a monotone
+    # transform of CAS score (index 9), so sorting by score descending is
+    # biologically identical -- and avoids the lexical-vs-numeric string
+    # issues with scientific notation and "<p" / ">p" prefix sentinels
+    # that make a direct sort by the p-value column unreliable.
     if len(sorted_clusters_target_species_hits_list) > 0:
-        sorted_clusters_target_species_hits_list = sorted(sorted_clusters_target_species_hits_list, key=itemgetter(10), reverse=False)
+        sorted_clusters_target_species_hits_list = sorted(sorted_clusters_target_species_hits_list, key=itemgetter(9), reverse=True)
 
     return sorted_clusters_target_species_hits_list
 

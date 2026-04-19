@@ -124,8 +124,9 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         for great_hit in great_hits:
             sorted_by_ca_list.append(great_hit)
 
-    # ref-point
-    sorted_by_ca_list = sorted(sorted_by_ca_list, key=itemgetter(10)) # sort by combined affinity p-val
+    # Sort by CAS score descending -- monotone with CAS p-value ascending
+    # and doesn't trip on scientific-notation / "<p" / ">p" strings.
+    sorted_by_ca_list = sorted(sorted_by_ca_list, key=itemgetter(9), reverse=True)
 
     ### AX1: Predicted TFBSs
     for sorted_great_hit in sorted_by_ca_list:

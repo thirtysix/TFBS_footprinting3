@@ -1,20 +1,27 @@
 #!/usr/bin/env python3
 """Aggregate tfbs_footprinter3's native per-transcript Parquet output into
-the per-species CAS distribution artifact.
+the per-species threshold artifacts.
 
 Reads: `<results_dir>/*/TFBSs_found.sortedclusters.parquet`, the layout
-tfbs_footprinter3 produces when driven with `-of parquet` or
-`-of slim-parquet`.
+tfbs_footprinter3 produces with `-of parquet` or `-of slim-parquet`.
 
-Writes: <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2026.tsv.gz
+Writes per species:
 
-    The CAS threshold table the runtime `species_specific_data()` loads
-    from the S3 tarball at `data_loader.py:306`. For each TF, one row per
-    target p-value on a fixed grid: [0.01..1.0 in 0.01 steps] + decades
-    [1e-3..1e-12] + a 0.1x subgrid between them. Rows are deduped: once
-    target p drops below the statistical floor (1/N) the max observed
-    score repeats; we keep only the first (loosest) p for each unique
-    score.
+  1. <out_dir>/<species>/<species>.CAS_thresholds.jaspar_2026.tsv.gz
+
+     The CAS p-value lookup table. Consumed by the tool's
+     calcCombinedAffinityPvalue (scoring.py). Grid: 0.01..1.0 step 0.01
+     + decades 1e-3..1e-12 + a 0.1x subgrid.
+
+  2. <out_dir>/<species>/<species>.tfs_thresholds.jaspar_2026.tsv.gz
+
+     The per-PWM p-value lookup table. Consumed by the tool's PWM hit
+     filter / p-value assignment at pipeline.py. Grid: 0.01..1.0 step
+     0.01 + decades 1e-3..1e-9 (narrower than CAS; raw PWM scores
+     don't resolve beyond that at typical sampling depth).
+
+Both files use the same (tf_name, p_value, score) TSV schema and drop
+duplicate-score rows below the statistical floor 1/N.
 
 Usage:
     python hpc/puhti/build_cas_distributions.py \\
@@ -36,48 +43,56 @@ import pandas as pd
 # Column names in the tool's native parquet output (see output.py).
 _TF_COL = "binding prot."
 _CAS_COL = "combined affinity score"
+_PWM_COL = "PWM score"
 _ROUND_DECIMALS = 2
 
-# NOTE on the "0.1" in the output filename: this is a historical artifact.
-# Early tool releases truncated the JSON to p <= 0.1 to save space, then
-# bisected the remaining sorted list for lookup. The tool still loads the
-# same filename (`tfbs_footprinter3/data_loader.py:306`) and still uses
-# bisect_left on the sorted score list, but there's no reason to keep the
-# truncation: emitting the full distribution lets the tool report p-values
-# for non-significant hits too (p between 0.1 and 1.0), which
-# `pwm_results_summaries/*.CAS_pvalue_score.tsv` was designed to provide.
-# We keep the literal filename for backward compatibility with the loader.
 
-
-def _target_p_values() -> list[float]:
-    """Reproduce the grid used in the reference
-    results_extraction.005.py for the human CAS run."""
+def _cas_target_p_values() -> list[float]:
+    """CAS p-value target grid: coarse 0.01..1.0 + decades 1e-3..1e-12
+    + a 0.1x subgrid between decades. ~200 values; the fine subgrid is
+    worth it for CAS because the sum-of-contributions distribution
+    supports deeper tail resolution than raw PWM scores do."""
     coarse = [x / 100 for x in range(1, 101)]  # 0.01..1.00
     decades = [10 ** (-x) for x in range(3, 13)]  # 1e-3..1e-12
     fine = [y * (z / 10) for y in decades for z in range(1, 11)]  # 0.1..1.0 x each decade
     return sorted(set(coarse + decades + fine), reverse=True)
 
 
-def _load_cas_scores_per_tf(results_dir: Path) -> dict[str, np.ndarray]:
-    """Concatenate CAS scores across every per-transcript parquet in
-    `results_dir`, grouped by TF.
+def _pwm_target_p_values() -> list[float]:
+    """PWM p-value target grid: coarse 0.01..1.0 + decades 1e-3..1e-9.
+    107 values, matching the reference
+    `{species}.tfs_thresholds.jaspar_2018.tsv.gz` files. PWM score
+    distributions are narrower than CAS (no signal sum), so the
+    statistical floor shows up ~1e-6 for 2M-hit samples; going
+    deeper than 1e-9 wastes rows on uninformative saturated tails."""
+    coarse = [x / 100 for x in range(1, 101)]  # 0.01..1.00
+    decades = [10 ** (-x) for x in range(3, 10)]  # 1e-3..1e-9
+    return sorted(set(coarse + decades), reverse=True)
 
-    Returns a dict tf_name -> 1-D float64 ndarray of all that TF's CAS
-    scores across every hit across every transcript.
+
+def _load_values_per_tf(results_dir: Path, value_col: str) -> dict[str, np.ndarray]:
+    """Concatenate `value_col` across every per-transcript parquet in
+    `results_dir`, grouped by TF name.
+
+    Returns a dict tf_name -> 1-D float64 ndarray of all that TF's
+    values across every hit across every transcript.
+
+    Stream-concat per-file reads of just the two columns we need so
+    peak memory stays bounded by one parquet's rows (~200 MB) plus the
+    per-TF accumulator for the value column (~4-8 GB for 1019 TFs x
+    ~2M hits).
     """
     parquet_files = sorted(results_dir.rglob("TFBSs_found.sortedclusters.parquet"))
     if not parquet_files:
         raise FileNotFoundError(f"no parquet files under {results_dir}")
-    logging.info("aggregating %d parquet files from %s", len(parquet_files), results_dir)
+    logging.info("aggregating %d parquet files for column %r from %s",
+                 len(parquet_files), value_col, results_dir)
 
-    # Stream-concat per-file reads of just the two columns we need so peak
-    # memory stays proportional to one parquet file (~200 MB) instead of
-    # the whole 17 GB species total.
     per_tf_chunks: dict[str, list[np.ndarray]] = {}
     for i, path in enumerate(parquet_files, 1):
-        df = pd.read_parquet(path, columns=[_TF_COL, _CAS_COL])
+        df = pd.read_parquet(path, columns=[_TF_COL, value_col])
         for tf_name, sub in df.groupby(_TF_COL, sort=False):
-            per_tf_chunks.setdefault(tf_name, []).append(sub[_CAS_COL].to_numpy())
+            per_tf_chunks.setdefault(tf_name, []).append(sub[value_col].to_numpy())
         if i % 10 == 0 or i == len(parquet_files):
             logging.info("  %d/%d parquets read", i, len(parquet_files))
 
@@ -134,6 +149,46 @@ def _scores_at_target_pvalues(
     return out
 
 
+def _build_threshold_tsv(
+    per_tf_values: dict[str, np.ndarray],
+    target_p_values: list[float],
+    min_hits: int,
+    tsv_path: Path,
+) -> tuple[int, int, int]:
+    """Build and gzip-write a threshold TSV from a pre-loaded per-TF
+    value dict.
+
+    Returns (tfs_kept, tfs_dropped, rows_written).
+    """
+    tsv_rows: list[tuple[str, float, float]] = []
+    tfs_kept = tfs_dropped = 0
+    for tf_name in sorted(per_tf_values.keys()):
+        scores = per_tf_values[tf_name]
+        if scores.size < min_hits:
+            tfs_dropped += 1
+            continue
+        pairs = _empirical_survival_pvalues(scores)
+        # Drop consecutive rows that re-emit the same score under a
+        # tighter target p-value (below the statistical floor of 1/N).
+        # Targets iterate descending in p, so keep the FIRST (loosest) row
+        # for each distinct score.
+        seen_scores: set[float] = set()
+        for t, s in _scores_at_target_pvalues(pairs, target_p_values):
+            if s in seen_scores:
+                continue
+            seen_scores.add(s)
+            tsv_rows.append((tf_name, t, s))
+        tfs_kept += 1
+
+    with gzip.open(tsv_path, "wt") as f:
+        f.write("tf_name\tp_value\tscore\n")
+        for tf_name, p, s in tsv_rows:
+            f.write(f"{tf_name}\t{p}\t{s}\n")
+    logging.info("wrote %s (%d rows, %d TFs kept, %d dropped)",
+                 tsv_path, len(tsv_rows), tfs_kept, tfs_dropped)
+    return tfs_kept, tfs_dropped, len(tsv_rows)
+
+
 def build_for_species(
     species: str,
     results_dir: Path,
@@ -143,47 +198,30 @@ def build_for_species(
     out_species_dir = out_dir / species
     out_species_dir.mkdir(parents=True, exist_ok=True)
 
-    per_tf_scores = _load_cas_scores_per_tf(results_dir)
+    # CAS threshold table -- tool loads via data_loader.py:306 for the
+    # combined-affinity-score p-value lookup.
+    cas_per_tf = _load_values_per_tf(results_dir, _CAS_COL)
+    cas_tsv = out_species_dir / f"{species}.CAS_thresholds.jaspar_2026.tsv.gz"
+    cas_kept, cas_dropped, cas_rows = _build_threshold_tsv(
+        cas_per_tf, _cas_target_p_values(), min_hits, cas_tsv,
+    )
+    del cas_per_tf  # free ~8 GB before the PWM pass
 
-    tsv_rows: list[tuple[str, float, float]] = []
-    tfs_kept = tfs_dropped = 0
-    targets = _target_p_values()
-
-    for tf_name in sorted(per_tf_scores.keys()):
-        scores = per_tf_scores[tf_name]
-        if scores.size < min_hits:
-            tfs_dropped += 1
-            continue
-        pairs = _empirical_survival_pvalues(scores)
-        # Drop consecutive rows that re-emit the same score under a tighter
-        # target p-value (the statistical floor: once the target p is smaller
-        # than 1/N we can't resolve further, so _scores_at_target_pvalues
-        # pins the output to the max observed score for every decade below).
-        # Targets are iterated descending in p, so we keep the FIRST (loosest)
-        # row for each distinct score.
-        seen_scores: set[float] = set()
-        for t, s in _scores_at_target_pvalues(pairs, targets):
-            if s in seen_scores:
-                continue
-            seen_scores.add(s)
-            tsv_rows.append((tf_name, t, s))
-        tfs_kept += 1
-
-    tsv_path = out_species_dir / f"{species}.CAS_thresholds.jaspar_2026.tsv.gz"
-    with gzip.open(tsv_path, "wt") as f:
-        f.write("tf_name\tp_value\tscore\n")
-        for tf_name, p, s in tsv_rows:
-            f.write(f"{tf_name}\t{p}\t{s}\n")
-    logging.info("wrote %s (%d rows, %d TFs kept, %d dropped)",
-                 tsv_path, len(tsv_rows), tfs_kept, tfs_dropped)
+    # Per-PWM threshold table -- tool loads via data_loader.py (glob
+    # `.tfs_thresholds.*.tsv.gz`) for the PWM-score p-value lookup at
+    # each individual hit.
+    pwm_per_tf = _load_values_per_tf(results_dir, _PWM_COL)
+    pwm_tsv = out_species_dir / f"{species}.tfs_thresholds.jaspar_2026.tsv.gz"
+    pwm_kept, pwm_dropped, pwm_rows = _build_threshold_tsv(
+        pwm_per_tf, _pwm_target_p_values(), min_hits, pwm_tsv,
+    )
 
     return {
         "species": species,
         "status": "ok",
-        "tfs_kept": tfs_kept,
-        "tfs_dropped": tfs_dropped,
         "min_hits": min_hits,
-        "tsv": str(tsv_path),
+        "cas": {"tfs_kept": cas_kept, "tfs_dropped": cas_dropped, "rows": cas_rows, "tsv": str(cas_tsv)},
+        "pwm": {"tfs_kept": pwm_kept, "tfs_dropped": pwm_dropped, "rows": pwm_rows, "tsv": str(pwm_tsv)},
     }
 
 

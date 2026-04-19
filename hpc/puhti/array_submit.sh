@@ -35,7 +35,7 @@
 #SBATCH --partition=small
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=8G
+#SBATCH --mem=16G
 #SBATCH --time=01:30:00
 #SBATCH --array=1-10%10
 #SBATCH --output=logs/%x_%A_%a.out

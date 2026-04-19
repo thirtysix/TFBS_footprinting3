@@ -93,28 +93,37 @@ def _load_histogram_per_tf(results_dir: Path, value_col: str) -> dict[str, dict[
     logging.info("aggregating %d parquet files for column %r from %s",
                  len(parquet_files), value_col, results_dir)
 
-    # Single growing dict keyed on (tf_name, rounded_score). Bounded by
-    # the distinct pair count (~5-10M at steady state) not by hit count
-    # or parquet count, so memory stays flat as more parquets process.
-    # We use pandas' vectorized groupby.size() per parquet to avoid
-    # Python-level iteration over raw hits, then increment the running
-    # dict over the much smaller distinct-pair counts (~20k per parquet).
+    # Fast path: per parquet, encode (tf_name, rounded_score) as a single
+    # int64 key so numpy's vectorized unique+count can operate in a single
+    # C call on the flat 20M-row array, rather than letting pandas groupby
+    # manage ~5M distinct groups with string + float key comparisons.
+    #
+    # Key layout: (tf_code << 32) | (score_int + SCORE_OFFSET)
+    #   - tf_code: int32 from pd.factorize (1019 TFs << 2^31 headroom)
+    #   - score_int: round(score * 100) as int32; OFFSET shifts negatives
+    #     into the positive range so low 32 bits are always non-negative
+    #     (avoids signed/unsigned shenanigans during bit-OR)
+    # Score range in practice: ~-250 to +100 -> *100 = -25000 to +10000;
+    # +30000 OFFSET -> 5000 to 40000, fits in 16 bits with room to spare.
+    SCORE_OFFSET = 30000
+
     global_counts: dict[tuple[str, float], int] = {}
     for i, path in enumerate(parquet_files, 1):
         df = pd.read_parquet(path, columns=[_TF_COL, value_col])
-        df[value_col] = np.round(df[value_col].to_numpy().astype(np.float64), _ROUND_DECIMALS)
-        counts = df.groupby([_TF_COL, value_col], sort=False, observed=True).size()
-        # Vectorized extraction of MultiIndex, then a tight Python loop
-        # over the ~20k distinct (tf, score) pairs in this parquet.
-        tfs = counts.index.get_level_values(0).to_numpy()
-        scores = counts.index.get_level_values(1).to_numpy()
-        cnts = counts.to_numpy()
-        for tf, s, c in zip(tfs, scores, cnts):
-            k = (tf, float(s))
-            if k in global_counts:
-                global_counts[k] += int(c)
+        tf_codes, tf_uniques = pd.factorize(df[_TF_COL].to_numpy(), sort=False)
+        score_int = np.round(df[value_col].to_numpy() * 100).astype(np.int32) + SCORE_OFFSET
+        keys = (tf_codes.astype(np.int64) << 32) | score_int.astype(np.int64)
+        unique_keys, counts = np.unique(keys, return_counts=True)
+        # Decode back to (tf_name, score_float) and accumulate
+        tf_codes_u = (unique_keys >> 32).astype(np.int32)
+        scores_u = ((unique_keys & 0xFFFFFFFF).astype(np.int32) - SCORE_OFFSET) / 100.0
+        for code, s, c in zip(tf_codes_u.tolist(), scores_u.tolist(), counts.tolist()):
+            tf_name = tf_uniques[code]
+            gk = (tf_name, s)
+            if gk in global_counts:
+                global_counts[gk] += c
             else:
-                global_counts[k] = int(c)
+                global_counts[gk] = c
         if i % 10 == 0 or i == len(parquet_files):
             logging.info("  %d/%d parquets read", i, len(parquet_files))
 

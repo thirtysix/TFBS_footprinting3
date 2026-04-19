@@ -25,7 +25,7 @@ from __future__ import annotations
 import logging
 import os
 import time
-from bisect import bisect_left
+from bisect import bisect_left, bisect_right
 from operator import itemgetter
 
 import numpy as np
@@ -158,16 +158,20 @@ def tfbs_finder(transcript_name, alignment, target_tfs_list, TFBS_matrix_dict, t
                             if scores_list_sorted is None:
                                 current_frame_score_pvalue = ""
                             else:
-                                pval_index = bisect_left(scores_list_sorted, current_frame_score)
-                                if pval_index >= len(pvals_scores_list_sorted):
-                                    pval_index = -1
-                                else:
-                                    pval_index -= 1
-
-                                # account for pvalues which are larger than the current largest, so that they can be distinguished appropriately in the result table.
-                                if pval_index < 0:
+                                # Conservative empirical p-value lookup:
+                                #  - query below min observed: ">P(max)" -- less
+                                #    significant than anything in the sample
+                                #  - query above max observed: "<P(min)" -- more
+                                #    significant than the tightest observed p
+                                #  - otherwise: p at the largest threshold <= query
+                                # scores_list_sorted is ascending so pvalues at
+                                # matching indices are descending.
+                                if current_frame_score < scores_list_sorted[0]:
                                     current_frame_score_pvalue = ">" + str(pvals_scores_list_sorted[0][0])
+                                elif current_frame_score > scores_list_sorted[-1]:
+                                    current_frame_score_pvalue = "<" + str(pvals_scores_list_sorted[-1][0])
                                 else:
+                                    pval_index = bisect_right(scores_list_sorted, current_frame_score) - 1
                                     current_frame_score_pvalue = str(pvals_scores_list_sorted[pval_index][0])
 
                             hit_loc_start, hit_loc_end, hit_loc_before_TSS_start, hit_loc_before_TSS_end = start_end_found_motif(i, strand, seq_length, promoter_after_tss, motif_length)

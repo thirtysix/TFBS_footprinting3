@@ -40,8 +40,15 @@ def _scientific_pvalue_if_small(s):
 
     Mirrors the in-place transformation the original per-row code did on
     hit[8] and hit[10] — factored out so the hot loop is simpler.
+
+    Pass through the prefixed sentinels:
+      ">..."  -- query below min observed (less significant than anything
+                 in the empirical table)
+      "<..."  -- query above max observed (more significant than the
+                 tightest observed p)
+      ""      -- no p-value available
     """
-    if s == "" or ">" in s:
+    if s == "" or s.startswith(">") or s.startswith("<"):
         return s
     if float(s) <= _SMALL_PVAL_THRESHOLD:
         return f"{Decimal(s):.3e}"

@@ -40,7 +40,7 @@ declare -a SKIPPED=()
 # has little headroom, rather than letting sbatch fail mid-loop.
 # Default: leave at least one species' worth of array slots free.
 : "${ARTIFACTS_DIR:=${PROJECT}/artifacts}"
-: "${MAX_PENDING_BEFORE_SUBMIT:=100}"
+: "${MAX_PENDING_BEFORE_SUBMIT:=150}"
 
 CURRENT_QUEUE=$(squeue -u "$USER" -h -r 2>/dev/null | wc -l || echo 0)
 
@@ -105,15 +105,26 @@ while IFS= read -r SPECIES; do
         rm -f "${TARBALL}"
     fi
 
+    # Auto-size the SLURM array to the transcript count. With
+    # TRANSCRIPTS_PER_TASK=10 (default in array_submit.sh), a 100-
+    # transcript species needs array 1-10, a 1000-transcript species
+    # needs array 1-100. Concurrency cap (%N) stays fixed so campaign-
+    # scale throughput is predictable.
+    : "${TRANSCRIPTS_PER_TASK:=10}"
+    : "${MAX_ARRAY_CONCURRENT:=20}"
+    TRANSCRIPT_COUNT=$(wc -l < "${RUN_DIR}/transcripts.txt")
+    ARRAY_SIZE=$(( (TRANSCRIPT_COUNT + TRANSCRIPTS_PER_TASK - 1) / TRANSCRIPTS_PER_TASK ))
+
     ARRAY_ID=$(sbatch --parsable \
-        --export=SPECIES="${SPECIES}" \
+        --array=1-${ARRAY_SIZE}%${MAX_ARRAY_CONCURRENT} \
+        --export=SPECIES="${SPECIES}",TRANSCRIPTS_PER_TASK="${TRANSCRIPTS_PER_TASK}" \
         "${REPO_ROOT}/hpc/puhti/array_submit.sh")
     AGG_ID=$(sbatch --parsable \
         --dependency=afterok:"${ARRAY_ID}" \
         --export=SPECIES="${SPECIES}" \
         "${REPO_ROOT}/hpc/puhti/aggregate_submit.sh")
 
-    echo "  [ok]   ${SPECIES}   array=${ARRAY_ID}   agg=${AGG_ID}"
+    echo "  [ok]   ${SPECIES}   array=${ARRAY_ID} (tasks=${ARRAY_SIZE})   agg=${AGG_ID}"
     SUBMITTED_ARRAYS+=("${ARRAY_ID}")
     SUBMITTED_AGGS+=("${AGG_ID}")
 

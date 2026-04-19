@@ -79,6 +79,32 @@ while IFS= read -r SPECIES; do
         break
     fi
 
+    # Pre-stage the species tarball on the login node before the array
+    # fans out. Otherwise 20 concurrent tasks all race to download +
+    # extract the tarball into the same tfbs_footprinter3/data/${SP}/
+    # path, corrupting each other's partial files (observed: truncated
+    # gerp msgpack, ValueError: Unpack failed: incomplete input).
+    SP_DATA_DIR="${REPO_ROOT}/tfbs_footprinter3/data/${SPECIES}"
+    if [[ ! -d "${SP_DATA_DIR}" ]]; then
+        echo "  [fetch] ${SPECIES}: downloading species tarball from S3..."
+        TARBALL="${REPO_ROOT}/tfbs_footprinter3/data/${SPECIES}.tar.gz"
+        TARBALL_URL="https://s3.us-east-2.amazonaws.com/tfbssexperimentaldata/${SPECIES}.tar.gz"
+        if ! wget -q -O "${TARBALL}" "${TARBALL_URL}"; then
+            echo "  [error] ${SPECIES}: tarball download failed from ${TARBALL_URL}" >&2
+            rm -f "${TARBALL}"
+            SKIPPED+=("${SPECIES}")
+            continue
+        fi
+        if ! tar -xzf "${TARBALL}" -C "${REPO_ROOT}/tfbs_footprinter3/data/"; then
+            echo "  [error] ${SPECIES}: tarball extraction failed" >&2
+            rm -f "${TARBALL}"
+            rm -rf "${SP_DATA_DIR}"
+            SKIPPED+=("${SPECIES}")
+            continue
+        fi
+        rm -f "${TARBALL}"
+    fi
+
     ARRAY_ID=$(sbatch --parsable \
         --export=SPECIES="${SPECIES}" \
         "${REPO_ROOT}/hpc/puhti/array_submit.sh")

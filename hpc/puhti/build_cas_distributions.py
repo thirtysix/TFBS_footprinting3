@@ -70,17 +70,16 @@ def _pwm_target_p_values() -> list[float]:
     return sorted(set(coarse + decades), reverse=True)
 
 
-def _load_values_per_tf(results_dir: Path, value_col: str) -> dict[str, np.ndarray]:
-    """Concatenate `value_col` across every per-transcript parquet in
-    `results_dir`, grouped by TF name.
+def _load_histogram_per_tf(results_dir: Path, value_col: str) -> dict[str, dict[float, int]]:
+    """Build per-TF {rounded_score -> count} histograms across every
+    per-transcript parquet in `results_dir`.
 
-    Returns a dict tf_name -> 1-D float64 ndarray of all that TF's
-    values across every hit across every transcript.
-
-    Stream-concat per-file reads of just the two columns we need so
-    peak memory stays bounded by one parquet's rows (~200 MB) plus the
-    per-TF accumulator for the value column (~4-8 GB for 1019 TFs x
-    ~2M hits).
+    Memory profile: O(N_unique_rounded_scores x N_TFs) instead of
+    O(N_hits x N_TFs). With 2-decimal rounding, each TF typically has
+    ~5k distinct scores regardless of sample size, so the aggregator's
+    peak memory is ~80 MB total rather than scaling with transcript
+    count. This lets a 1000-transcript species aggregate inside the
+    same 16 GB allocation that handles 100-transcript species.
     """
     parquet_files = sorted(results_dir.rglob("TFBSs_found.sortedclusters.parquet"))
     if not parquet_files:
@@ -88,15 +87,43 @@ def _load_values_per_tf(results_dir: Path, value_col: str) -> dict[str, np.ndarr
     logging.info("aggregating %d parquet files for column %r from %s",
                  len(parquet_files), value_col, results_dir)
 
-    per_tf_chunks: dict[str, list[np.ndarray]] = {}
+    per_tf_hist: dict[str, dict[float, int]] = {}
     for i, path in enumerate(parquet_files, 1):
         df = pd.read_parquet(path, columns=[_TF_COL, value_col])
+        # Round to 2 decimals, cast to python floats via .tolist() below
+        # for stable dict keys (float32/float64 bit differences between
+        # parquets can otherwise spawn near-duplicate keys).
+        df[value_col] = np.round(df[value_col].to_numpy().astype(np.float64), _ROUND_DECIMALS)
         for tf_name, sub in df.groupby(_TF_COL, sort=False):
-            per_tf_chunks.setdefault(tf_name, []).append(sub[value_col].to_numpy())
+            scores, counts = np.unique(sub[value_col].to_numpy(), return_counts=True)
+            tf_hist = per_tf_hist.setdefault(tf_name, {})
+            for s, c in zip(scores.tolist(), counts.tolist(), strict=True):
+                tf_hist[s] = tf_hist.get(s, 0) + c
         if i % 10 == 0 or i == len(parquet_files):
             logging.info("  %d/%d parquets read", i, len(parquet_files))
 
-    return {tf: np.concatenate(chunks) for tf, chunks in per_tf_chunks.items()}
+    return per_tf_hist
+
+
+def _empirical_survival_from_histogram(hist: dict[float, int]) -> list[tuple[float, float]]:
+    """Same output as _empirical_survival_pvalues but from a score->count
+    histogram. Avoids materializing the full score array.
+
+    Returns sorted-ascending (score, P(X>=score)) tuples.
+    """
+    if not hist:
+        return []
+    # Sort scores ascending; at rounded resolution (2 decimals) this is
+    # typically ~5k entries even for species with 20M total hits.
+    sorted_items = sorted(hist.items())
+    scores = np.array([s for s, _ in sorted_items], dtype=np.float64)
+    counts = np.array([c for _, c in sorted_items], dtype=np.int64)
+    n = int(counts.sum())
+    # Survival P(X >= s_i) = sum_{j>=i} counts[j] / N. cumsum from the
+    # right, then flip back.
+    survival_counts = np.cumsum(counts[::-1])[::-1]
+    p_values = survival_counts.astype(np.float64) / n
+    return [(float(s), float(p)) for s, p in zip(scores, p_values, strict=True)]
 
 
 def _empirical_survival_pvalues(scores: np.ndarray) -> list[tuple[float, float]]:
@@ -150,24 +177,25 @@ def _scores_at_target_pvalues(
 
 
 def _build_threshold_tsv(
-    per_tf_values: dict[str, np.ndarray],
+    per_tf_hist: dict[str, dict[float, int]],
     target_p_values: list[float],
     min_hits: int,
     tsv_path: Path,
 ) -> tuple[int, int, int]:
     """Build and gzip-write a threshold TSV from a pre-loaded per-TF
-    value dict.
+    score->count histogram.
 
     Returns (tfs_kept, tfs_dropped, rows_written).
     """
     tsv_rows: list[tuple[str, float, float]] = []
     tfs_kept = tfs_dropped = 0
-    for tf_name in sorted(per_tf_values.keys()):
-        scores = per_tf_values[tf_name]
-        if scores.size < min_hits:
+    for tf_name in sorted(per_tf_hist.keys()):
+        hist = per_tf_hist[tf_name]
+        total_hits = sum(hist.values())
+        if total_hits < min_hits:
             tfs_dropped += 1
             continue
-        pairs = _empirical_survival_pvalues(scores)
+        pairs = _empirical_survival_from_histogram(hist)
         # Drop consecutive rows that re-emit the same score under a
         # tighter target p-value (below the statistical floor of 1/N).
         # Targets iterate descending in p, so keep the FIRST (loosest) row
@@ -200,20 +228,20 @@ def build_for_species(
 
     # CAS threshold table -- tool loads via data_loader.py:306 for the
     # combined-affinity-score p-value lookup.
-    cas_per_tf = _load_values_per_tf(results_dir, _CAS_COL)
+    cas_hist = _load_histogram_per_tf(results_dir, _CAS_COL)
     cas_tsv = out_species_dir / f"{species}.CAS_thresholds.jaspar_2026.tsv.gz"
     cas_kept, cas_dropped, cas_rows = _build_threshold_tsv(
-        cas_per_tf, _cas_target_p_values(), min_hits, cas_tsv,
+        cas_hist, _cas_target_p_values(), min_hits, cas_tsv,
     )
-    del cas_per_tf  # free ~8 GB before the PWM pass
+    del cas_hist
 
     # Per-PWM threshold table -- tool loads via data_loader.py (glob
     # `.tfs_thresholds.*.tsv.gz`) for the PWM-score p-value lookup at
     # each individual hit.
-    pwm_per_tf = _load_values_per_tf(results_dir, _PWM_COL)
+    pwm_hist = _load_histogram_per_tf(results_dir, _PWM_COL)
     pwm_tsv = out_species_dir / f"{species}.tfs_thresholds.jaspar_2026.tsv.gz"
     pwm_kept, pwm_dropped, pwm_rows = _build_threshold_tsv(
-        pwm_per_tf, _pwm_target_p_values(), min_hits, pwm_tsv,
+        pwm_hist, _pwm_target_p_values(), min_hits, pwm_tsv,
     )
 
     return {

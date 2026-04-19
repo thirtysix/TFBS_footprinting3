@@ -86,27 +86,34 @@ sbatch --dependency=afterok:${ARRAY_ID} --export=SPECIES=${SPECIES} \
     TFBS_footprinting3/hpc/puhti/aggregate_submit.sh
 ```
 
-**Why an array instead of one serial job**: memory grows with each
-transcript processed in a single Python process (observed: job 34055541
-reached 32.8 GB after 23 transcripts and OOM'd). A per-transcript task
-peaks at ~7-9 GB and avoids the accumulation, so 12 GB × 100 concurrent
-is cheaper than 32 GB serial. Array also gives true parallelism: a
-100-transcript species finishes in ~30 min wall instead of ~11 h.
+**Why a batched array**: memory grows with each transcript processed
+in a single Python process (observed: 32.8 GB after 23 transcripts
+in-process). Two mitigations stacked:
+
+  1. Each array task processes N transcripts (default
+     `TRANSCRIPTS_PER_TASK=10`), invoking `tfbs_footprinter3` as a
+     fresh subprocess per transcript so memory fully releases between
+     them. Per-transcript peak stays at ~4-5 GB under slim-parquet.
+  2. The array size drops from 100 to 10 tasks per species. At CSC's
+     ~200-slot AssocMaxSubmit quota, the campaign can run ~20
+     species concurrently (10 tasks × 20 species = 200) instead of
+     ~2 — a ~5x speedup for the full 316-species run.
 
 The array:
 
-* creates `$PROJECT/runs/$SPECIES/tasks/NNN/` per task so concurrent
-  `TFBS_footprinter3.log` writes don't interleave
-* picks transcript N from line N of `transcripts.txt`
-* runs `tfbs_footprinter3 -t <one-line file> -pb 5000 -pa 5000 -p 1 -pc 1 -no -of parquet`
-* species experimental data is auto-downloaded on first task from
-  `s3://tfbssexperimentaldata/${SPECIES}.tar.gz`
+* creates `$PROJECT/runs/$SPECIES/tasks/NNN/` per task
+* picks 10 consecutive transcripts from `transcripts.txt` (task 1:
+  lines 1-10; task 2: lines 11-20; …)
+* runs `tfbs_footprinter3 -t single_transcript.txt -pb 5000 -pa 5000 -p 1 -pc 1 -no -of slim-parquet`
+  once per transcript in a bash loop
+* species experimental data is pre-staged by submit_batch.sh on the
+  Puhti login node (one wget + tar-extract) before the array fans
+  out, eliminating the concurrent-download race that would otherwise
+  corrupt in-flight msgpack files
 
-Defaults are `--array=1-100%20`, `--mem=12G`, `--time=00:45:00`. Override
-on the command line for a different transcript count or concurrency —
-e.g. `sbatch --array=1-100%50 …` for 50-way concurrent. Edit the
-`#SBATCH --account=` line for your billing project if you're not on
-`project_2001307`.
+Defaults are `--array=1-10%10`, `--mem=8G`, `--time=01:30:00`.
+Override for a different layout — e.g. 5 transcripts per task:
+`sbatch --array=1-20%10 --export=SPECIES=X,TRANSCRIPTS_PER_TASK=5 …`.
 
 For one-off single-transcript tests, `pilot_submit.sh` still runs the
 whole list serially; kept as a reference but not used for the campaign.

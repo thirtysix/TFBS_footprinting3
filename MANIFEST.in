@@ -1,4 +1,9 @@
 include LICENSE
 include sample_analysis/*
 include README.md
-recursive-include tfbs_footprinter3/data *.json
+# Only the small bundled JSON files ship with the package. Species-specific
+# data (cage_data/, cpg_data/, gerp_data/, ...) is fetched at runtime from S3
+# and must NOT be packaged -- it's >100 MB per species.
+include tfbs_footprinter3/data/pwms.json
+include tfbs_footprinter3/data/JASPAR_2026_pwms.json
+include tfbs_footprinter3/data/species_nt_freq.json

@@ -49,9 +49,12 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     """
     _ensure_matplotlib_loaded()
 
-    # set axes for human
+    # Wider than the pre-0.1.0 figsize (was 10 x 6) because composite
+    # JASPAR 2026 TF names (tf_name__MAxxxx.y) are ~3x longer than the
+    # plain TF names used before, and the top-of-plot legend runs into
+    # itself at 10 inches wide.
     if target_species == "homo_sapiens":
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(14, 6))
         ax1 = plt.subplot2grid((20,1),(0,0), rowspan = 6, colspan = 11)
         ax8 = plt.subplot2grid((20,1),(6,0), rowspan = 2, colspan = 11)
         ax2 = plt.subplot2grid((20,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
@@ -84,17 +87,21 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         ax7.text(1.01,.5,'CAGE\nPeaks\n(TSSs)', verticalalignment='center', transform=ax7.transAxes, rotation='vertical', fontsize=6)
         ax8.text(1.01,.5,'TF\nExpress.\nCorr.', verticalalignment='center', transform=ax8.transAxes, rotation='vertical', fontsize=6)
 
-    ### as of now the data for non-human species is limited to predicted TFBSs, conservation, and CpG
+    # Non-human species now have TFBSs + conservation + CpG + CAGE panels.
+    # (Previously CAGE was human-only; as of 0.1.0 every species tarball
+    # ships its own cage_data/ from FANTOM so plot_promoter can render it.)
     else:
-        fig = plt.figure(figsize=(10, 6))
-        ax1 = plt.subplot2grid((10,1),(0,0), rowspan = 6, colspan = 11)
-        ax2 = plt.subplot2grid((10,1),(6,0), sharex=ax1, rowspan = 2, colspan = 11)
-        ax3 = plt.subplot2grid((10,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
+        fig = plt.figure(figsize=(14, 6))
+        ax1 = plt.subplot2grid((12,1),(0,0), rowspan = 6, colspan = 11)
+        ax2 = plt.subplot2grid((12,1),(6,0), sharex=ax1, rowspan = 2, colspan = 11)
+        ax3 = plt.subplot2grid((12,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
+        ax7 = plt.subplot2grid((12,1),(10,0), sharex=ax1, rowspan = 2, colspan = 11)
 
         # Set format of the plot(s)
         # Hide x-ticks for all plots except the lowest
         plt.setp(ax1.get_xticklabels(), visible=False)
         plt.setp(ax2.get_xticklabels(), visible=False)
+        plt.setp(ax3.get_xticklabels(), visible=False)
 
         # plt + ax labels
         ax1.text(1.02,.5,'Predicted TFBSs', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=8)
@@ -103,6 +110,7 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
         ax1.text(1.005,.01,'- strand', verticalalignment='bottom', transform=ax1.transAxes, rotation='vertical', fontsize=6)
         ax2.text(1.01,.5,'GERP\nConserv.\n'+species_group, verticalalignment='center', transform=ax2.transAxes, rotation='vertical', fontsize=5)
         ax3.text(1.01,.5,'CpG\nObs/Exp', verticalalignment='center', transform=ax3.transAxes, rotation='vertical', fontsize=6)
+        ax7.text(1.01,.5,'CAGE\nPeaks\n(TSSs)', verticalalignment='center', transform=ax7.transAxes, rotation='vertical', fontsize=6)
 
 
     # plot title
@@ -245,31 +253,30 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
     plt.setp(ax3.get_yticklabels(), fontsize=6)
     ax3.axhline(0.6, color = 'black', alpha = 0.4)
 
-    ### human-specific experimental data
+    ### AX7: CAGE plot -- now runs for every species, not just homo_sapiens
+    cage_height = 1
+    for converted_cage in converted_cages:
+        converted_cage_start = converted_cage[0]
+        converted_cage_end = converted_cage[1]
+        description = converted_cage[2]
+
+        cage_x_series = []
+        cage_y_series = []
+        cage_center_point = float(converted_cage_start + converted_cage_end)/2
+        cage_x_series.append(cage_center_point)
+        cage_y_series.append(cage_height)
+
+        cage_width = abs(converted_cage_start - converted_cage_end)
+        ax7.bar(cage_x_series, cage_y_series, facecolor='black', edgecolor='black', align = 'center', width=cage_width, label=description)
+
+        # add label for the CAGE peak
+        if -1 * promoter_before_tss <= converted_cage_start <= promoter_after_tss + 1 or -1 * promoter_before_tss <= converted_cage_end <= promoter_after_tss + 1:
+            plt.text(cage_center_point, cage_height, description, color="red", rotation = 270, fontsize=5, horizontalalignment='center', verticalalignment='top')
+
+    ax7.axes.get_yaxis().set_visible(False)
+
+    ### human-only experimental data panels (eQTL, metacluster, ATAC, TF-expression correlation)
     if target_species == "homo_sapiens":
-
-        ### AX7: CAGE plot
-        cage_height = 1
-        cage_labels = []
-        for converted_cage in converted_cages:
-            converted_cage_start = converted_cage[0]
-            converted_cage_end = converted_cage[1]
-            description = converted_cage[2]
-
-            cage_x_series = []
-            cage_y_series = []
-            cage_center_point = float(converted_cage_start + converted_cage_end)/2
-            cage_x_series.append(cage_center_point)
-            cage_y_series.append(cage_height)
-
-            cage_width = abs(converted_cage_start - converted_cage_end)
-            ax7.bar(cage_x_series, cage_y_series, facecolor='black', edgecolor='black', align = 'center', width=cage_width, label=description)
-
-            # add label for the CAGE peak
-            if -1 * promoter_before_tss <= converted_cage_start <= promoter_after_tss + 1 or -1 * promoter_before_tss <= converted_cage_end <= promoter_after_tss + 1:
-                plt.text(cage_center_point, cage_height, description, color="red", rotation = 270, fontsize=5, horizontalalignment='center', verticalalignment='top')
-
-        ax7.axes.get_yaxis().set_visible(False)
 
         ### AX5: GTRD plot
         gtrd_height = 1
@@ -386,7 +393,7 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
     _ensure_matplotlib_loaded()
 
     if target_species == "homo_sapiens":
-        fig = plt.figure(figsize=(10, 6))
+        fig = plt.figure(figsize=(14, 6))
         ax1 = plt.subplot2grid((20,1),(0,0), rowspan = 6, colspan = 11)
         ax8 = plt.subplot2grid((20,1),(6,0), rowspan = 2, colspan = 11)
         ax2 = plt.subplot2grid((20,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
@@ -419,17 +426,19 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         ax7.text(1.01,.5,'CAGE\nPeaks\n(TSSs)', verticalalignment='center', transform=ax7.transAxes, rotation='vertical', fontsize=6)
         ax8.text(1.01,.5,'TF\nExpress.\nCorr.', verticalalignment='center', transform=ax8.transAxes, rotation='vertical', fontsize=6)
 
-    ### as of now the data for non-human species is limited to predicted TFBSs, conservation, and CpG
+    # Non-human species now have TFBSs + conservation + CpG + CAGE panels.
     else:
-        fig = plt.figure(figsize=(10, 6))
-        ax1 = plt.subplot2grid((10,1),(0,0), rowspan = 6, colspan = 11)
-        ax2 = plt.subplot2grid((10,1),(6,0), sharex=ax1, rowspan = 2, colspan = 11)
-        ax3 = plt.subplot2grid((10,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
+        fig = plt.figure(figsize=(14, 6))
+        ax1 = plt.subplot2grid((12,1),(0,0), rowspan = 6, colspan = 11)
+        ax2 = plt.subplot2grid((12,1),(6,0), sharex=ax1, rowspan = 2, colspan = 11)
+        ax3 = plt.subplot2grid((12,1),(8,0), sharex=ax1, rowspan = 2, colspan = 11)
+        ax7 = plt.subplot2grid((12,1),(10,0), sharex=ax1, rowspan = 2, colspan = 11)
 
         # Set format of the plot(s)
         # Hide x-ticks for all plots except the lowest
         plt.setp(ax1.get_xticklabels(), visible=False)
         plt.setp(ax2.get_xticklabels(), visible=False)
+        plt.setp(ax3.get_xticklabels(), visible=False)
 
         # plt + ax labels
         ax1.text(1.02,.5,'Predicted TFBSs', verticalalignment='center', transform=ax1.transAxes, rotation='vertical', fontsize=8)
@@ -438,6 +447,7 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
         ax1.text(1.005,.01,'- strand', verticalalignment='bottom', transform=ax1.transAxes, rotation='vertical', fontsize=6)
         ax2.text(1.01,.5,'GERP\nConserv.\n'+species_group, verticalalignment='center', transform=ax2.transAxes, rotation='vertical', fontsize=5)
         ax3.text(1.01,.5,'CpG\nObs/Exp', verticalalignment='center', transform=ax3.transAxes, rotation='vertical', fontsize=6)
+        ax7.text(1.01,.5,'CAGE\nPeaks\n(TSSs)', verticalalignment='center', transform=ax7.transAxes, rotation='vertical', fontsize=6)
 
 
     # plot title
@@ -580,32 +590,29 @@ def plot_promoter_all(target_species, transcript_id, species_group, alignment, a
     plt.setp(ax3.get_yticklabels(), fontsize=6)
     ax3.axhline(0.6, color = 'black', alpha = 0.4)
 
-    ### human-specific experimental data
+    ### AX7: CAGE plot -- now runs for every species, not just homo_sapiens
+    cage_height = 1
+    for converted_cage in converted_cages:
+        converted_cage_start = converted_cage[0]
+        converted_cage_end = converted_cage[1]
+        description = converted_cage[2]
+        cage_x_series = []
+        cage_y_series = []
+        cage_center_point = float(converted_cage_start + converted_cage_end)/2
+        cage_x_series.append(cage_center_point)
+        cage_y_series.append(cage_height)
+
+        cage_width = abs(converted_cage_start - converted_cage_end)
+        ax7.bar(cage_x_series, cage_y_series, facecolor='black', edgecolor='black', align = 'center', width=cage_width, label=description)
+
+        # add label for the CAGE peak
+        if -1 * promoter_before_tss <= converted_cage_start <= promoter_after_tss + 1 or -1 * promoter_before_tss <= converted_cage_end <= promoter_after_tss + 1:
+            plt.text(cage_center_point, cage_height, description, color="red", rotation = 270, fontsize=5, horizontalalignment='center', verticalalignment='top')
+
+    ax7.axes.get_yaxis().set_visible(False)
+
+    ### human-only experimental data panels (eQTL, metacluster, ATAC, TF-expression correlation)
     if target_species == "homo_sapiens":
-
-        ### AX7: CAGE plot
-        cage_height = 1
-        cage_labels = []
-        for converted_cage in converted_cages:
-            converted_cage_start = converted_cage[0]
-            converted_cage_end = converted_cage[1]
-            description = converted_cage[2]
-##            if ".." in description:
-##                description = ""
-            cage_x_series = []
-            cage_y_series = []
-            cage_center_point = float(converted_cage_start + converted_cage_end)/2
-            cage_x_series.append(cage_center_point)
-            cage_y_series.append(cage_height)
-
-            cage_width = abs(converted_cage_start - converted_cage_end)
-            ax7.bar(cage_x_series, cage_y_series, facecolor='black', edgecolor='black', align = 'center', width=cage_width, label=description)
-
-            # add label for the CAGE peak
-            if -1 * promoter_before_tss <= converted_cage_start <= promoter_after_tss + 1 or -1 * promoter_before_tss <= converted_cage_end <= promoter_after_tss + 1:
-                plt.text(cage_center_point, cage_height, description, color="red", rotation = 270, fontsize=5, horizontalalignment='center', verticalalignment='top')
-
-        ax7.axes.get_yaxis().set_visible(False)
 
         ### AX5: GTRD plot
         gtrd_height = 1

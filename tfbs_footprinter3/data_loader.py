@@ -23,10 +23,10 @@ import logging
 import os
 import tarfile
 import time
+import urllib.request
 
 import numpy as np
 import pandas as pd
-import urllib.request
 
 from tfbs_footprinter3.io_utils import (
     directory_creator,

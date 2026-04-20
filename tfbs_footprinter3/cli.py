@@ -142,16 +142,16 @@ def get_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         description=textwrap.dedent("""\
             TFBS Footprinting - Identification of conserved vertebrate transcription factor binding sites (TFBSs).
-            See https://github.com/thirtysix/TFBS_footprinting for additional usage instructions.
+            See https://github.com/thirtysix/TFBS_footprinting3 for additional usage instructions.
 
             ------------------------------------------------------------------------------------------------------
             Example Usage:
 
                 simplest:
-                tfbs_footprinter3 PATH_TO/sample_ensembl_ids.txt
+                tfbs_footprinter3 -t PATH_TO/sample_ensembl_ids.txt
 
                 all arguments:
-                tfbs_footprinter3 -t PATH_TO/sample_ensembl_ids.txt -tfs PATH_TO/sample_jaspar_tf_ids.txt -pb 900 -pa 100 -tx 10 -p 0.01 -update
+                tfbs_footprinter3 -t PATH_TO/sample_ensembl_ids.txt -tfs PATH_TO/sample_analysis/jaspar_tf_ids_all.txt -pb 900 -pa 100 -tx 10 -p 0.01 -pc 0.01 -update
 
                 run the sample analysis:
                 Option #1: tfbs_footprinter3 -t PATH_TO/sample_analysis/sample_analysis_list.csv
@@ -168,8 +168,8 @@ def get_args():
     parser.add_argument('--t_ids_file', '-t', metavar='', type=str,
                         help='Required for running an analysis.  Location of a file containing Ensembl target_species transcript ids.  Input options are either a text file of Ensembl transcript ids or a .csv file with individual values set for each parameter.')
 
-    parser.add_argument('--tf_ids_file', '-tfs', metavar='', type=str, default=None, help='Optional: Location of a file containing a limited list of Jaspar TFs to use in scoring alignment \
-                                                                                                (see sample file tf_ids.txt at https://github.com/thirtysix/TFBS_footprinting) [default: all Jaspar TFs]')
+    parser.add_argument('--tf_ids_file', '-tfs', metavar='', type=str, default=None, help='Optional: Location of a file containing a limited list of JASPAR TFs to use in scoring the alignment \
+                                                                                                (see sample_analysis/jaspar_tf_ids_all.txt at https://github.com/thirtysix/TFBS_footprinting3). TF names are the composite form tf_name__matrix_id, e.g. ARNT__MA0004.1. [default: all 1019 JASPAR 2026 TFs]')
 
     parser.add_argument('--promoter_before_tss', '-pb', metavar='', choices=range(-100000, 100001), type=int, default=900,
                         help='(0-100,000) [default: 900] - Number (integer) of nucleotides upstream of TSS to include in analysis.  If this number is negative the start point will be downstream of the TSS, the end point will then need to be further downstream.')
@@ -180,10 +180,9 @@ def get_args():
     parser.add_argument('--top_x_tfs', '-tx', metavar='', choices=range(1, 21), type=int, default=10,
                         help='(1-20) [default: 10] - Number (integer) of unique TFs to include in output .svg figure.')
 
-    # for now pvalue refers to the PWM score, in the future it will need to relate to the combined affinity score
-    parser.add_argument('--pval', '-p', type=float, default=1, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
+    parser.add_argument('--pval', '-p', type=float, default=1, help='P-value (float) cutoff on the per-PWM score. Hits whose PWM score is less significant than this p are discarded. Range: 1 (no filtering, keep all hits) down to ~1e-6 (the statistical floor of a typical empirical threshold table). [default: 1]')
 
-    parser.add_argument('--pvalc', '-pc', type=float, default=1, help='P-value (float) for PWM score cutoff (range: 1 (all results) to 0.0000001; in divisions of 10 (i.e. 1, 0.1, 0.01, 0.001 etc.) [default: 0.01]')
+    parser.add_argument('--pvalc', '-pc', type=float, default=1, help='P-value (float) cutoff on the combined affinity score (CAS = PWM + contextual weights). Hits whose CAS p is less significant than this are discarded. Range: 1 (no filtering) down to the statistical floor of the species CAS distribution (~5e-7 for 100-transcript training sets, ~5e-8 for 1000-transcript). [default: 1]')
 
     parser.add_argument('--exp_data_update', '-update', action="store_true", help='Download the latest experimental data files for use in analysis.  Will run automatically if the "data" directory does not already exist (e.g. first usage).')
 

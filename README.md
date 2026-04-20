@@ -131,11 +131,11 @@ A video tutorial on how to install the TFBS_footprinting tool and run sample ana
 
 ## 2.1 Conda installation (recommended)
 
-The TFBS_footprinting package can be installed directly to your linux system using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
+The TFBS_footprinting3 package can be installed directly using [Conda](https://anaconda.org/thirtysix/tfbs-footprinting3).
 
-1. Create a conda environment based on python version 3.8, named 'tfbs':
+1. Create a conda environment (Python 3.9–3.12 supported; 3.12 recommended):
 
-`$ conda create -n tfbs python=3.8`
+`$ conda create -n tfbs python=3.12`
 
 2. Activate the created conda environment:
 
@@ -143,17 +143,19 @@ The TFBS_footprinting package can be installed directly to your linux system usi
 
 3. Install the TFBS_footprinting3 tool:
 
-`$ conda install -c thirtysix tfbs-footprinting3 -c conda-forge`
+`$ conda install -c thirtysix -c conda-forge tfbs-footprinting3`
 
-4. Install wget with pip:
+All runtime dependencies (biopython, numpy, matplotlib, pandas, msgpack, wget, httplib2) are pulled in automatically; no follow-up `pip install` is needed.
 
-`$ pip install wget`
+## 2.2 PyPI installation
 
-## 2.2 Pypi installation
-
-The TFBS_footprinting package can be installed directly to your linux system using [PIP](https://pip.pypa.io/en/stable/installing/) install.
+The TFBS_footprinting3 package can also be installed from [PyPI](https://pypi.org/project/TFBS-footprinting3/):
 
 `$ pip install tfbs_footprinting3`
+
+For the optional parquet output format (`-of parquet` / `-of slim-parquet`), install with the `[parquet]` extra which also brings in pyarrow:
+
+`$ pip install 'tfbs_footprinting3[parquet]'`
 
 ## 2.3 Docker installation (Deprecated, uses Python 2.7)
 
@@ -165,13 +167,17 @@ The Docker installation will have a default RAM allocation that is too low (\~2G
 
 ## 2.4 Requirements
 
-These requirements are automatically installed by Conda and the PIP installer, and are already present in the Docker image:
+These requirements are automatically installed by Conda and PIP:
 -   biopython
 -   numpy
 -   matplotlib
+-   pandas
 -   httplib2
 -   msgpack
 -   wget
+
+Optional (enables `-of parquet` / `-of slim-parquet` output):
+-   pyarrow (installed via `pip install 'tfbs_footprinting3[parquet]'`)
 
 # 3. Input
 

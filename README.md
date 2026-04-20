@@ -48,7 +48,9 @@ Additional documentation available at
 
 ## 1.1 Basics
 
-**Primary Usage:** Identification of cis-regulatory elements in up to 124 vertebrate species cataloged in the [Ensembl.org](https://www.ensembl.org/index.html) database. Transcription factor binding sites (TFBSs) are initially identified by matrix scoring and then additionally scored on 7 other relevant contextual datapoints (see 1.2). Uses the Ensembl transcript ID (TID) as the basic point of reference for all analyses.
+**Primary Usage:** Identification of cis-regulatory elements in up to 316 vertebrate species cataloged in [Ensembl.org](https://www.ensembl.org/index.html) release 113. Transcription factor binding sites (TFBSs) are initially identified by matrix scoring against the [JASPAR 2026](https://jaspar.elixir.no/) CORE vertebrates non-redundant motif catalog (1019 PWMs), and then additionally scored on 7 other relevant contextual datapoints (see 1.2). Uses the Ensembl transcript ID (TID) as the basic point of reference for all analyses.
+
+> **Version 0.1.0** (2026-04) brings the JASPAR 2026 motif upgrade, reworked CAS / PWM p-value threshold tables, and several scoring-path bug fixes. See [CHANGELOG.md](CHANGELOG.md) for the full list.
 
 ![logo](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting/master/tfbs_logo.png)* This work is a derivative of ["Transcription factors"](https://commons.wikimedia.org/wiki/File:Transcription_Factors.svg) by [kelvin13](https://commons.wikimedia.org/wiki/User:Kelvin13), used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 * * *
@@ -103,7 +105,7 @@ Additional documentation available at
 
 ## 1.3 Experimental data
 
-The TFBS footprinting method computationally predicts transcription factor binding sites (TFBSs) in a target species (e.g., homo sapiens, chimpanzee, mouse, zebrafish, etc.) using 575 position weight matrices (PWMs) based on binding data from the JASPAR database. Additional experimental data from a variety of sources is used to support or detract from these predictions:
+The TFBS footprinting method computationally predicts transcription factor binding sites (TFBSs) in a target species (e.g., homo sapiens, chimpanzee, mouse, zebrafish, etc.) using 1019 position weight matrices (PWMs) from the JASPAR 2026 CORE vertebrates non-redundant set. Additional experimental data from a variety of sources is used to support or detract from these predictions:
 
 -   Sequence conservation in homologous vertebrate species DNA sequences
 -   proximity to CAGE-supported transcription start sites (TSSs)
@@ -187,7 +189,7 @@ In this second option a simple text-file of Ensembl transcript IDs is used. What
 
 ## 3.3 Text file TF IDs
 
-A file of JASPAR TF IDs can be provided which will limit the analysis of TFs to just those contained within. If no file name is provided then the analysis will use all 575 JASPAR TFs in the analysis, in this case the results in the output table can be filtered to just those TFs you wish to focus on. An example of this file, which contains all JASPAR TF IDs, is included in the sample_analysis folder which can be downloaded from [Github](https://github.com/thirtysix/TFBS_footprinting/blob/master/sample_analysis/sample_jaspar_tf_ids.txt).
+A file of JASPAR TF IDs can be provided which will limit the analysis of TFs to just those contained within. If no file name is provided then the analysis will use all 1019 JASPAR 2026 vertebrate TFs, in which case the results in the output table can be filtered to just those TFs you wish to focus on. Since 0.1.0 the TF name in output is a composite of `{tf_name}__{matrix_id}` (e.g. `ARNT__MA0004.1`) so that TFs with multiple JASPAR matrix IDs don't collide. An example file of all JASPAR TF IDs is in the `sample_analysis/` folder.
 
 ![input_sample_tfs](https://raw.githubusercontent.com/thirtysix/TFBS_footprinting/master/sample_tf_ids.txt.png)
 

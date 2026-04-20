@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.1 — 2026-04-20
+
+Hotfix on top of 0.1.0.
+
+- The 0.1.0 conda package listed `wget` in run requirements, but
+  conda-forge's `wget` is the GNU CLI binary -- not the Python `wget`
+  package required by `data_loader.py`. Fresh conda installs crashed
+  on first import with `ModuleNotFoundError: No module named 'wget'`.
+- Fixed by replacing the `wget.download` calls in `data_loader.py`
+  with `urllib.request.urlretrieve` (stdlib, no new dep). The Python
+  `wget` package dependency is now dropped from both pyproject.toml
+  and the conda recipe. PyPI installs were unaffected (they got the
+  Python wget from pip) but are also now slimmer.
+
 ## 0.1.0 — 2026-04-20
 
 Major release: JASPAR 2026 motif catalog, new threshold table format,

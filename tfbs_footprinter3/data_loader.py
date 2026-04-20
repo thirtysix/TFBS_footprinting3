@@ -26,7 +26,7 @@ import time
 
 import numpy as np
 import pandas as pd
-import wget
+import urllib.request
 
 from tfbs_footprinter3.io_utils import (
     directory_creator,
@@ -75,7 +75,7 @@ def experimentalDataUpdater(exp_data_update):
         logging.info(" ".join(["Downloading most current experimental data."]))
 
         try:
-            wget.download(experimental_data_url, out=experimental_data_down_loc)
+            urllib.request.urlretrieve(experimental_data_url, experimental_data_down_loc)
             tar = tarfile.open(experimental_data_down_loc)
             tar.extractall(experimental_data_dir)
             experimental_data_present = True
@@ -104,7 +104,7 @@ def experimentaldata(target_species):
         logging.info("Downloading most current experimental data for %s." % target_species)
 
         try:
-            wget.download(experimental_data_species_url, out=experimental_data_species_dir_tar)
+            urllib.request.urlretrieve(experimental_data_species_url, experimental_data_species_dir_tar)
             tar = tarfile.open(experimental_data_species_dir_tar)
             tar.extractall(experimental_data_dir)
 
@@ -156,8 +156,8 @@ def experimentalDataUpdater_beta():
         logging.info(" ".join(["Downloading most current experimental data."]))
 
         try:
-            wget.download(current_version_url, out=experimental_data_dir)
-            wget.download(experimental_data_url, out=experimental_data_down_loc)
+            urllib.request.urlretrieve(current_version_url, experimental_data_dir)
+            urllib.request.urlretrieve(experimental_data_url, experimental_data_down_loc)
             tar = tarfile.open(experimental_data_down_loc)
             tar.extractall(experimental_data_dir)
 

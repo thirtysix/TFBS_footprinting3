@@ -89,7 +89,12 @@ while IFS= read -r SPECIES; do
         aws s3 cp "${S3_BUCKET_AWS}/${SPECIES}.tar.gz" "${S3_BUCKET_AWS}/${BACKUP_KEY}" \
             --only-show-errors
         echo "  [upload] ${NEW_TARBALL} -> ${S3_BUCKET_AWS}/${SPECIES}.tar.gz"
-        aws s3 cp "${NEW_TARBALL}" "${S3_BUCKET_AWS}/${SPECIES}.tar.gz" --only-show-errors
+        # --acl public-read: the bucket has a global AllUsers:READ grant at
+        # the bucket level, but new objects otherwise inherit private ACLs.
+        # The tool downloads via unauthenticated HTTP from
+        # s3.us-east-2.amazonaws.com, so every release tarball must be
+        # explicitly set public-readable.
+        aws s3 cp "${NEW_TARBALL}" "${S3_BUCKET_AWS}/${SPECIES}.tar.gz" --acl public-read --only-show-errors
         uploaded=$((uploaded + 1))
     fi
 done < "${SPECIES_LIST}"

@@ -141,14 +141,17 @@ def plot_promoter(target_species, transcript_id, species_group, alignment, align
 
         tf_name = sorted_great_hit[0]
 
-        # choose a unique color for each tf_name
+        # Assign each tf_name a stable color by cycling the 20-entry
+        # palette in first-seen order. Previous code drained the palette
+        # via `color_series.remove(...)` and used numpy.random.randint's
+        # bogus `high=len-1` (which excludes the last color and errors
+        # with "high <= 0" once the palette reaches size 1). With
+        # composite JASPAR 2026 TF names (tf_name__matrix_id) each motif
+        # variant counts as a distinct tf_name, so in practice the
+        # figure often has >20 unique tfs and the old code crashed.
         if tf_name not in color_dict:
-            pick = numpyrandom.randint(0, len(color_series) - 1)
-            picked_color = color_series[pick]
-            color_series.remove(picked_color)
-            color_dict[tf_name] = picked_color
-        else:
-            picked_color = color_dict[tf_name]
+            color_dict[tf_name] = color_series[len(color_dict) % len(color_series)]
+        picked_color = color_dict[tf_name]
 
         # if the label has been used, set label to "", otherwise labels will repeat in legend
         if tf_name in labels_used:

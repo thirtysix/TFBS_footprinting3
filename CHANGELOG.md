@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.2 — 2026-04-21
+
+Hotfix for a plotting crash reported by users after 0.1.1.
+
+- `plot_promoter` crashed with `ValueError: high <= 0` when the figure
+  contained more than ~20 unique TFs (common with composite JASPAR
+  2026 TF names, since each motif variant is a distinct `tf_name`).
+  Two bugs compounded: the color palette was drained via
+  `color_series.remove(...)` on every new TF, and the pick call
+  `numpy.random.randint(0, len(color_series) - 1)` errored once the
+  palette reached size 1 AND excluded the last color entry even when
+  it didn't error. Replaced with deterministic modulo cycling
+  (`color_series[len(color_dict) % len(color_series)]`) -- stable
+  colors across re-runs, no palette exhaustion, no crash on any TF
+  count.
+
 ## 0.1.1 — 2026-04-20
 
 Hotfix on top of 0.1.0.

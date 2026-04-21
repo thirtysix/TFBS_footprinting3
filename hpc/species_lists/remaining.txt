@@ -150,7 +150,6 @@ oryzias_melastigma
 oryzias_sinensis
 otolemur_garnettii
 otus_sunia
-ovis_aries
 ovis_aries_rambouillet
 pan_paniscus
 panthera_leo

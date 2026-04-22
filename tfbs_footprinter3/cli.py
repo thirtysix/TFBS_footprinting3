@@ -381,9 +381,15 @@ def main():
                         # species-specific
                         species_specific_data_dir = os.path.join(script_dir, 'data', target_species)
                         experimentaldata(target_species)
+                        if not os.path.exists(species_specific_data_dir):
+                            raise RuntimeError(
+                                f"species data directory not found at {species_specific_data_dir} "
+                                f"for target species {target_species!r} -- the S3 tarball download "
+                                f"likely failed (no internet, species not yet published, or the "
+                                f"species was renamed in Ensembl). Scoring cannot proceed without "
+                                f"it.")
                         if target_species != last_target_species or chromosome != last_chromosome:
-                            if os.path.exists(species_specific_data_dir):
-                                species_pwm_score_threshold_df, gerp_conservation_locations_dict, species_group, cage_dict, TF_cage_dict, cage_dist_weights_dict, cage_correlations_dict, cage_corr_weights_dict, metacluster_overlap_weights_dict, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, gtex_variants, gtex_weights_dict, gtrd_metaclusters_dict, atac_seq_dict, cas_pvalues_dict = species_specific_data(target_species, chromosome, species_specific_data_dir)
+                            species_pwm_score_threshold_df, gerp_conservation_locations_dict, species_group, cage_dict, TF_cage_dict, cage_dist_weights_dict, cage_correlations_dict, cage_corr_weights_dict, metacluster_overlap_weights_dict, cpg_obsexp_weights_dict, cpg_obsexp_weights_dict_keys, gtex_variants, gtex_weights_dict, gtrd_metaclusters_dict, atac_seq_dict, cas_pvalues_dict = species_specific_data(target_species, chromosome, species_specific_data_dir)
                             last_target_species = target_species
                             last_chromosome = chromosome
 

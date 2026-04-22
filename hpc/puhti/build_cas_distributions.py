@@ -108,8 +108,17 @@ def _load_histogram_per_tf(results_dir: Path, value_col: str) -> dict[str, dict[
     SCORE_OFFSET = 30000
 
     global_counts: dict[tuple[str, float], int] = {}
+    skipped: list[tuple[Path, str]] = []
     for i, path in enumerate(parquet_files, 1):
-        df = pd.read_parquet(path, columns=[_TF_COL, value_col])
+        try:
+            if path.stat().st_size == 0:
+                raise ValueError("zero-byte file")
+            df = pd.read_parquet(path, columns=[_TF_COL, value_col])
+        except Exception as exc:
+            skipped.append((path, f"{type(exc).__name__}: {exc}"))
+            logging.warning("skipping unreadable parquet %s (%s: %s)",
+                            path, type(exc).__name__, exc)
+            continue
         tf_codes, tf_uniques = pd.factorize(df[_TF_COL].to_numpy(), sort=False)
         score_int = np.round(df[value_col].to_numpy() * 100).astype(np.int32) + SCORE_OFFSET
         keys = (tf_codes.astype(np.int64) << 32) | score_int.astype(np.int64)
@@ -126,6 +135,14 @@ def _load_histogram_per_tf(results_dir: Path, value_col: str) -> dict[str, dict[
                 global_counts[gk] = c
         if i % 10 == 0 or i == len(parquet_files):
             logging.info("  %d/%d parquets read", i, len(parquet_files))
+
+    if skipped:
+        logging.warning("skipped %d/%d parquet files (corrupt or empty — likely "
+                        "truncated by prior out-of-disk condition)",
+                        len(skipped), len(parquet_files))
+        if len(skipped) >= len(parquet_files):
+            raise RuntimeError(
+                f"every parquet file in {results_dir} was unreadable; aborting")
 
     # Unpack the flat dict into the nested shape _build_threshold_tsv
     # consumes. One Python pass over distinct pairs (~10M entries).

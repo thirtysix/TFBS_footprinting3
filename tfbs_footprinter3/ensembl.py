@@ -20,6 +20,7 @@ use output_type='json'. Retained verbatim during extraction so the
 behavior is preserved — a follow-up can classify transient vs fatal
 errors and drop the dead branch.
 """
+
 from __future__ import annotations
 
 import json
@@ -28,7 +29,6 @@ import os
 import time
 
 import httplib2
-
 
 # Pinned to the Ensembl release 113 archive (oct2024.rest.ensembl.org) so
 # that transcript IDs in our shipped GTF/threshold artifacts continue to
@@ -71,9 +71,31 @@ def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
                 return decoded_json
 
             except:
-                logging.info(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", full_query]))
+                logging.info(
+                    " ".join(
+                        [
+                            "Ensembl REST query unsuccessful, attempt:",
+                            "/".join([str(try_count), str(max_tries)]),
+                            "Sleeping:",
+                            str(fail_sleep_time),
+                            "seconds.",
+                            full_query,
+                        ]
+                    )
+                )
                 try_count += 1
-                print(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", "See logfile for query."]))
+                print(
+                    " ".join(
+                        [
+                            "Ensembl REST query unsuccessful, attempt:",
+                            "/".join([str(try_count), str(max_tries)]),
+                            "Sleeping:",
+                            str(fail_sleep_time),
+                            "seconds.",
+                            "See logfile for query.",
+                        ]
+                    )
+                )
                 time.sleep(fail_sleep_time)
 
         # return empty decoded_json if max tries has elapsed
@@ -89,9 +111,31 @@ def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
                 return fasta_content
 
             except:
-                logging.info(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", full_query]))
+                logging.info(
+                    " ".join(
+                        [
+                            "Ensembl REST query unsuccessful, attempt:",
+                            "/".join([str(try_count), str(max_tries)]),
+                            "Sleeping:",
+                            str(fail_sleep_time),
+                            "seconds.",
+                            full_query,
+                        ]
+                    )
+                )
                 try_count += 1
-                print(" ".join(["Ensembl REST query unsuccessful, attempt:", "/".join([str(try_count), str(max_tries)]), "Sleeping:", str(fail_sleep_time), "seconds.", "See logfile for query."]))
+                print(
+                    " ".join(
+                        [
+                            "Ensembl REST query unsuccessful, attempt:",
+                            "/".join([str(try_count), str(max_tries)]),
+                            "Sleeping:",
+                            str(fail_sleep_time),
+                            "seconds.",
+                            "See logfile for query.",
+                        ]
+                    )
+                )
                 time.sleep(fail_sleep_time)
 
         # return empty fasta_content if max tries has elapsed

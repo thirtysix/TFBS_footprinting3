@@ -24,9 +24,21 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import time
 
 import httplib2
+
+
+# Pinned to the Ensembl release 113 archive (oct2024.rest.ensembl.org) so
+# that transcript IDs in our shipped GTF/threshold artifacts continue to
+# resolve. The live rest.ensembl.org endpoint follows the latest build,
+# which silently rolls over to newer assemblies (e.g. ovis_aries moved
+# from ARS-UI_Ramb_v2.0 to v3.0; mouse strain MGP_* IDs and cat
+# ENSFCAT* are absent on the live endpoint as a result). Override with
+# TFBS_FOOTPRINTER3_ENSEMBL_REST=<base url> if you want a different
+# release.
+_DEFAULT_ENSEMBL_REST = "https://oct2024.rest.ensembl.org"
 
 
 def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
@@ -35,7 +47,7 @@ def ensemblrest(query_type, options, output_type, ensembl_id=None, log=False):
     """
 
     http = httplib2.Http()
-    server = "http://rest.ensembl.org"
+    server = os.environ.get("TFBS_FOOTPRINTER3_ENSEMBL_REST", _DEFAULT_ENSEMBL_REST)
     full_query = server + query_type + ensembl_id + options
 
     if log:

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.1.3 — 2026-04-27
+
+Hotfix that pins the Ensembl REST endpoint, recovering 17 species
+that silently broke when Ensembl rolled forward to assembly versions
+newer than release 113.
+
+- `tfbs_footprinter3/ensembl.py` now defaults its REST server to
+  `https://oct2024.rest.ensembl.org` (the Ensembl 113 archive) instead
+  of `http://rest.ensembl.org` (always-latest). The shipped species
+  data tarballs and the JASPAR 2026 threshold artifacts are all keyed
+  on Ensembl 113 transcript IDs, but the live REST endpoint had moved
+  on to newer assemblies (e.g. ovis_aries went from `ARS-UI_Ramb_v2.0`
+  to `v3.0`; the inbred-mouse `MGP_*` IDs and `ENSFCAT*` cat IDs are
+  absent on the live endpoint as a result). Pinning fixes:
+  - sheep (`ovis_aries`)
+  - cat (`felis_catus`) — also resolves the species-name remap that
+    previously sent the tool looking for `felis_catus_abyssinian`
+  - 16 mouse strain genomes (the `MGP_*` lab strains plus `mus_spretus`)
+- Override the endpoint with `TFBS_FOOTPRINTER3_ENSEMBL_REST=<url>`
+  if you need a different release.
+- 18 new species' tarballs uploaded to S3 with JASPAR 2026 thresholds
+  (sheep + 17 recovered above), bringing the runtime-supported species
+  count to 314 / 316 vertebrates.
+
 ## 0.1.2 — 2026-04-21
 
 Hotfix for a plotting crash reported by users after 0.1.1.

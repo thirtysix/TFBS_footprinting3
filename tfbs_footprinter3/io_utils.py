@@ -55,19 +55,47 @@ def directory_creator(directory_name):
 
 def is_online():
     """
-    Test if the system is online.
-    This breaks when TFBS_footprinter3 outlasts Google.
+    Test if the hosts TFBS_footprinter3 actually depends on are reachable.
+
+    Probes the S3 experimental-data bucket and the (optionally overridden)
+    Ensembl REST endpoint on port 443. Returns True if *any* target is
+    reachable, so users behind firewalls that block one host but not the
+    other are not false-negatived. The previous implementation probed
+    www.google.com, which made the tool unusable for users behind
+    Google-blocking firewalls (see GitHub issue: "System does not appear
+    to be connected to the internet" on networks where the S3 bucket is
+    in fact reachable).
     """
 
-    REMOTE_SERVER = "www.google.com"
-    try:
-        host = socket.gethostbyname(REMOTE_SERVER)
-        s = socket.create_connection((host, 80), 2)
-        return True
+    ensembl_host = os.environ.get(
+        "TFBS_FOOTPRINTER3_ENSEMBL_REST",
+        "https://oct2024.rest.ensembl.org",
+    )
+    # Strip scheme/path -> bare hostname for socket.gethostbyname.
+    ensembl_hostname = ensembl_host.split("://", 1)[-1].split("/", 1)[0]
 
-    except:
-        logging.info(" ".join(["System does not appear to be connected to the internet."]))
-        return False
+    targets = [
+        "s3.us-east-2.amazonaws.com",
+        ensembl_hostname,
+    ]
+
+    for hostname in targets:
+        try:
+            host = socket.gethostbyname(hostname)
+            socket.create_connection((host, 443), 2).close()
+            return True
+        except Exception:
+            continue
+
+    logging.info(
+        " ".join([
+            "System does not appear to be connected to the internet.",
+            "Tried:", ", ".join(targets) + ".",
+            "If you are behind a firewall that blocks one of these,",
+            "set TFBS_FOOTPRINTER3_ENSEMBL_REST to a reachable mirror.",
+        ])
+    )
+    return False
 
 
 def overlap_range(x, y):

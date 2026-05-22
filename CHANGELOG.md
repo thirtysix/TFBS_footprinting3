@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.4 — 2026-05-22
+
+Hotfix for a false-negative connectivity check that locked out users
+behind Google-blocking firewalls.
+
+- `io_utils.is_online()` previously probed `www.google.com:80`, which
+  has nothing to do with what the tool actually downloads. Users on
+  networks where Google is unreachable but the S3 experimental-data
+  bucket and the Ensembl REST endpoint are both reachable (e.g. a
+  CentOS 7 user in mainland China who reported `curl` against the
+  bucket returning `200 OK` while `tfbs_footprinter3 --version`
+  exited with "System does not appear to be connected to the
+  internet") were unable to run the tool at all.
+- The new probe targets the hosts the tool actually depends on
+  (`s3.us-east-2.amazonaws.com` + the pinned Ensembl REST endpoint),
+  uses HTTPS/443 (port 80 is increasingly firewalled), and returns
+  True if *any* target is reachable. `TFBS_FOOTPRINTER3_ENSEMBL_REST`
+  is honored if set, so users on networks that need an Ensembl mirror
+  can point the probe at the same URL.
+
 ## 0.1.3 — 2026-04-27
 
 Hotfix that pins the Ensembl REST endpoint, recovering 17 species

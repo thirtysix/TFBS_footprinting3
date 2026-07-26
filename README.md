@@ -1,6 +1,21 @@
+# TFBSFootprinter
+
+[![Article](https://img.shields.io/badge/article-Transcription%202025-informational)](https://doi.org/10.1080/21541264.2025.2521764)
+[![DOI](https://img.shields.io/badge/doi-10.1080%2F21541264.2025.2521764-blue)](https://doi.org/10.1080/21541264.2025.2521764)
+[![PubMed](https://img.shields.io/badge/PubMed-40646689-green)](https://pubmed.ncbi.nlm.nih.gov/40646689/)
+
+> **Published article.** Barker HR, Parkkila S, Tolvanen MEE.
+> *TFBSFootprinter: a multiomics tool for prediction of transcription factor
+> binding sites in vertebrate species.*
+> **Transcription** 16(2-3):204-223 (2025).
+> [doi:10.1080/21541264.2025.2521764](https://doi.org/10.1080/21541264.2025.2521764)
+> · [PubMed 40646689](https://pubmed.ncbi.nlm.nih.gov/40646689/)
+> · open access (CC BY 4.0)
+
+If you use TFBSFootprinter in your work, please cite the article above.
 
 Additional documentation available at
-[tfbs-footprinting.readthedocs.io](tfbs-footprinting.readthedocs.io)
+[tfbs-footprinting.readthedocs.io](https://tfbs-footprinting.readthedocs.io)
 
 # 0. Summary
 

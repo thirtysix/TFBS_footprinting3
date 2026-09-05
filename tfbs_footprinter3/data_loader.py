@@ -171,6 +171,35 @@ def experimentalDataUpdater_beta():
         dump_json(current_versions_file, current_versions)
 
 
+def find_chromosome_data_file(data_dir, target_species, chromosome, token):
+    """Locate a per-chromosome data file without pinning its release version.
+
+    Several shipped data files carry the source release in the filename
+    (e.g. `homo_sapiens.gtex_v8.Chr1.min_unique.eqtls.grch38.msg`). Building
+    that name from a hard-coded release string means a data rebuild silently
+    disables the feature, because the lookup is a bare `os.path.exists` with
+    no `else`. Match on species + chromosome + a stable token instead, and
+    take the lexicographically last hit so a newer release wins.
+
+    The chromosome is matched as `.Chr<N>.` so that `Chr1` does not also
+    match `Chr10`..`Chr19`. Returns None when nothing matches.
+    """
+
+    if not os.path.exists(data_dir):
+        return None
+
+    chromosome_tag = ".Chr" + chromosome.upper() + "."
+    candidates = [os.path.join(data_dir, x) for x in os.listdir(data_dir)
+                  if x.startswith(target_species + ".") and chromosome_tag in x and token in x]
+
+    if len(candidates) == 0:
+        return None
+
+    candidates.sort()
+
+    return candidates[-1]
+
+
 def species_specific_data(target_species, chromosome, species_specific_data_dir):
     """
     Many datasets are species-specific.  If the current target species has species-specific datasets, load them.
@@ -259,12 +288,15 @@ def species_specific_data(target_species, chromosome, species_specific_data_dir)
         cpg_obsexp_weights_dict_keys = []
 
     # load GTEx variants
+    # Discover the per-chromosome eQTL file by pattern instead of hard-coding the
+    # GTEx release. The release is part of the filename (e.g. "gtex_v8"), so the
+    # previous hard-coded "gtex_v7" stopped matching when the shipped data was
+    # rebuilt on v8 -- silently zeroing the eQTL term for every hit.
     gtex_variants = {}
     gtex_data_dir = os.path.join(species_specific_data_dir, "gtex_data")
-    if os.path.exists(gtex_data_dir):
-        gtex_chrom_dict_filename = os.path.join(gtex_data_dir, ".".join([target_species, "gtex_v7", "Chr" + chromosome.upper(), "min_unique", "eqtls", "grch38", "msg"]))
-        if os.path.exists(gtex_chrom_dict_filename):
-            gtex_variants = load_msgpack(gtex_chrom_dict_filename)
+    gtex_chrom_dict_filename = find_chromosome_data_file(gtex_data_dir, target_species, chromosome, "eqtls")
+    if gtex_chrom_dict_filename is not None:
+        gtex_variants = load_msgpack(gtex_chrom_dict_filename)
 
     # load GTEx weights
     gtex_weights_dict = {}

@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.1.5 — 2026-09-05
+
+Fixes a silent regression that disabled the eQTL evidence layer entirely.
+
+- `data_loader.species_specific_data` built the per-chromosome GTEx
+  filename from a hard-coded `"gtex_v7"` release string, but every
+  shipped tarball has carried `gtex_v8` since the data was rebuilt
+  (verified: `homo_sapiens.tar.gz` contains 24 `gtex_v8` files and no
+  `gtex_v7`). The lookup was a bare `os.path.exists` with no `else`, so
+  the mismatch did not raise -- `gtex_variants` stayed empty and the
+  `eqtls weights sum` column was identically zero for every hit. One of
+  the seven advertised evidence layers had been contributing nothing,
+  undetectably. Confirmed against the committed sample output: 0 of
+  ~500,000 rows had a nonzero eQTL weight.
+- Replaced with `data_loader.find_chromosome_data_file()`, which matches
+  on species + `.Chr<N>.` + a stable token and takes the
+  lexicographically last hit, so a future release bump cannot silently
+  disable the layer the same way. The chromosome is matched with
+  surrounding dots so `Chr1` does not also match `Chr10`..`Chr19`.
+- New `tests/test_eqtl_data_discovery.py` pins the behaviour, including
+  an end-to-end assertion against the installed human data.
+
+Note for anyone comparing against published results: the eQTL term was
+zero in the version used for the benchmarks in
+doi:10.1080/21541264.2025.2521764, so eQTL feature-contribution figures
+from that paper describe a layer that was not loading.
+
+
 ## 0.1.4 — 2026-05-22
 
 Hotfix for a false-negative connectivity check that locked out users

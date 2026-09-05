@@ -14,6 +14,7 @@ import logging
 import math
 import time
 from bisect import bisect_left
+from functools import lru_cache
 
 import numpy as np
 
@@ -241,6 +242,45 @@ def _cage_batch(motif_starts, motif_ends, cage_starts, cage_ends, cage_ratios, l
     return per_cell.sum(axis=1)
 
 
+def _gtex_weight_lookup(magnitudes, gtex_weights_dict):
+    """Weights for eQTL effect magnitudes, snapped onto the weight table's grid.
+
+    `gtex_weights_dict` is keyed on a 0.001-resolution grid of effect
+    magnitudes, but the magnitudes stored per variant carry full precision
+    (e.g. 0.392323), so an exact dict lookup raises KeyError on any value that
+    does not land on a grid point. This was unreachable while the eQTL data
+    failed to load at all (the hard-coded `gtex_v7` filename in data_loader);
+    reviving that layer exposed it.
+
+    Resolved the same way the CpG layer resolves the identical problem
+    (`cpg_weights_summing`): bisect to the nearest grid key at or above the
+    query, clamping to the top of the table.
+    """
+
+    keys = _gtex_sorted_keys(gtex_weights_dict)
+    if keys.size == 0:
+        return np.zeros(len(magnitudes), dtype=np.float64)
+
+    q = np.abs(np.asarray(magnitudes, dtype=np.float64))
+    idx = np.clip(np.searchsorted(keys, q, side="left"), 0, keys.size - 1)
+
+    return np.array([gtex_weights_dict[k] for k in keys[idx]], dtype=np.float64)
+
+
+@lru_cache(maxsize=8)
+def _gtex_sorted_keys_cached(key_tuple):
+    return np.array(key_tuple, dtype=np.float64)
+
+
+def _gtex_sorted_keys(gtex_weights_dict):
+    """Sorted key array for the weights table, cached per distinct table."""
+
+    if not gtex_weights_dict:
+        return np.empty(0, dtype=np.float64)
+
+    return _gtex_sorted_keys_cached(tuple(sorted(gtex_weights_dict)))
+
+
 def _eqtl_batch(motif_starts, motif_ends, eqtl_starts, eqtl_ends, eqtl_mags,
                 gtex_weights_dict, eqtl_occurrence_log_likelihood):
     """Per-hit eqtls_weights_sum across all hits of a TF."""
@@ -253,10 +293,7 @@ def _eqtl_batch(motif_starts, motif_ends, eqtl_starts, eqtl_ends, eqtl_mags,
     )
     # Per-cell weight = gtex_weights_dict[mag] + eqtl_occurrence_log_likelihood when overlap, else 0
     # Look up gtex_weights_dict per unique magnitude; eqtl_mags is (F,) so do a small Python map once.
-    per_eqtl_weight = np.array(
-        [gtex_weights_dict[float(m)] + eqtl_occurrence_log_likelihood for m in eqtl_mags],
-        dtype=np.float64,
-    )
+    per_eqtl_weight = _gtex_weight_lookup(eqtl_mags, gtex_weights_dict) + eqtl_occurrence_log_likelihood
     return (overlaps * per_eqtl_weight[None, :]).sum(axis=1)
 
 
@@ -422,7 +459,8 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
             overlap = overlap_range([motif_start, motif_end], [converted_eqtl_start, converted_eqtl_end])
 
             if len(overlap) > 0:
-                eqtl_weight = gtex_weights_dict[converted_eqtl_score_mag]
+                eqtl_weight = float(_gtex_weight_lookup([converted_eqtl_score_mag],
+                                                        gtex_weights_dict)[0])
                 eqtl_weights.append(eqtl_weight + eqtl_occurrence_log_likelihood)
 
     eqtl_weights_sum = sum(eqtl_weights)

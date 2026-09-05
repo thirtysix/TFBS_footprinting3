@@ -22,6 +22,21 @@ Fixes a silent regression that disabled the eQTL evidence layer entirely.
 - New `tests/test_eqtl_data_discovery.py` pins the behaviour, including
   an end-to-end assertion against the installed human data.
 
+Reviving that layer immediately exposed a second, latent crash in the
+same code path:
+
+- `_eqtl_batch` (and its scalar counterpart `eqtls_weights_summing`)
+  looked the eQTL effect magnitude up in `gtex_weights_dict` by exact
+  float key. That table is a 0.001-resolution grid -- 2,617 keys from
+  0.0 to 6.023 in the shipped human data -- while the magnitude stored
+  on each variant carries full precision, so any value not landing on a
+  grid point raised `KeyError` (observed: 0.392323, 0.388412, 0.116223).
+  Unreachable before, because `converted_eqtls` was always empty.
+- Now bisects onto the grid, the same resolution `cpg_weights_summing`
+  already uses for the identical problem, clamping above the top of the
+  table and taking the absolute magnitude. Pinned by
+  `tests/test_eqtl_weight_lookup.py`.
+
 Note for anyone comparing against published results: the eQTL term was
 zero in the version used for the benchmarks in
 doi:10.1080/21541264.2025.2521764, so eQTL feature-contribution figures

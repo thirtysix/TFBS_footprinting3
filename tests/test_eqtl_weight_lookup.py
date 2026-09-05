@@ -74,3 +74,24 @@ def test_eqtl_batch_survives_off_grid_magnitudes(grid):
     # first motif overlaps only the first eQTL, second only the second
     assert out[0] == pytest.approx(393.0 + 1.5)
     assert out[1] == pytest.approx(117.0 + 1.5)
+
+
+def test_scalar_reference_agrees_with_batch_off_grid(grid):
+    """The scalar test-reference must not diverge from the production path.
+
+    `eqtls_weights_summing_v` is what tests/test_scoring_vectorized.py checks
+    `_eqtl_batch` against, so if only one of them snaps to the grid the
+    agreement test silently stops meaning anything.
+    """
+    from tfbs_footprinter3.scoring import eqtls_weights_summing_v
+
+    motif_start, motif_end = 10, 20
+    eqtl_starts = np.array([12, 15], dtype=np.int64)
+    eqtl_ends = np.array([13, 16], dtype=np.int64)
+    eqtl_mags = np.array([0.392323, 0.116223], dtype=np.float64)
+
+    scalar = eqtls_weights_summing_v(1.5, motif_start, motif_end,
+                                     eqtl_starts, eqtl_ends, eqtl_mags, grid)
+    batch = _eqtl_batch(np.array([motif_start]), np.array([motif_end]),
+                        eqtl_starts, eqtl_ends, eqtl_mags, grid, 1.5)[0]
+    assert scalar == pytest.approx(batch)

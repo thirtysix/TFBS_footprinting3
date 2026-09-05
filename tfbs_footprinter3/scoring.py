@@ -150,10 +150,11 @@ def eqtls_weights_summing_v(eqtl_occurrence_log_likelihood, motif_start, motif_e
     overlaps = _ranges_overlap(motif_start, motif_end, eqtl_starts, eqtl_ends)
     if not overlaps.any():
         return 0
-    total = 0.0
-    for mag in eqtl_mags[overlaps]:
-        total += gtex_weights_dict[float(mag)] + eqtl_occurrence_log_likelihood
-    return total
+    # same grid-snapping as _eqtl_batch: an exact float lookup raises KeyError
+    # on any magnitude that is not on the weight table's 0.001 grid.
+    sel = eqtl_mags[overlaps]
+    return float((_gtex_weight_lookup(sel, gtex_weights_dict)
+                  + eqtl_occurrence_log_likelihood).sum())
 
 
 # -------- Per-TF BATCH helpers --------
@@ -242,6 +243,9 @@ def _cage_batch(motif_starts, motif_ends, cage_starts, cage_ends, cage_ratios, l
     return per_cell.sum(axis=1)
 
 
+_METACLUSTER_MISSING_LENGTHS = set()
+
+
 def _gtex_weight_lookup(magnitudes, gtex_weights_dict):
     """Weights for eQTL effect magnitudes, snapped onto the weight table's grid.
 
@@ -308,6 +312,16 @@ def _metacluster_batch_tf(motif_starts_23, motif_ends_23, counts_arr, motif_len,
         return np.zeros(H, dtype=np.float64)
     inner_dict = overlap_weights_dict.get(str(motif_len))
     if not inner_dict:
+        # The metacluster weight table is keyed by motif length and was built
+        # against the JASPAR 2018 catalog, which it covered completely. JASPAR
+        # 2026 introduced widths it does not carry (4, 22, 23 and 30 nt -- 5 of
+        # 1019 motifs), and those silently score 0 for one of the strongest
+        # evidence layers. Warn once per length so the gap is visible.
+        if motif_len not in _METACLUSTER_MISSING_LENGTHS:
+            _METACLUSTER_MISSING_LENGTHS.add(motif_len)
+            logging.warning(
+                "no metacluster overlap weights for motif length %s; "
+                "metacluster contribution is 0 for motifs of this width", motif_len)
         return np.zeros(H, dtype=np.float64)
 
     # Pad counts_arr with zeros if some hits' windows extend past the end.
@@ -582,10 +596,18 @@ def metacluster_weights_summing(transcript_id, target_species_hit, metacluster_o
     motif_window = metacluster_in_promoter_counts[motif_start:motif_end]
     num_overlapping_metaclusters = max(motif_window)
 
-    if str(num_overlapping_metaclusters) in metacluster_overlap_weights_dict[str(motif_len)]:
-        metacluster_weights_sum = metacluster_overlap_weights_dict[str(motif_len)][str(num_overlapping_metaclusters)]
+    # Mirror _metacluster_batch_tf: an absent motif length yields 0 rather than
+    # KeyError, so the scalar reference and the production batch path agree.
+    inner_dict = metacluster_overlap_weights_dict.get(str(motif_len))
+    if inner_dict is None:
+        if motif_len not in _METACLUSTER_MISSING_LENGTHS:
+            _METACLUSTER_MISSING_LENGTHS.add(motif_len)
+            logging.warning(
+                "no metacluster overlap weights for motif length %s; "
+                "metacluster contribution is 0 for motifs of this width", motif_len)
+    elif str(num_overlapping_metaclusters) in inner_dict:
+        metacluster_weights_sum = inner_dict[str(num_overlapping_metaclusters)]
     else:
-        print("metacluster overlap sum not in weight dict")
         logging.warning(" ".join(["metacluster overlap sum not in weight dict"]))
 
     return metacluster_weights_sum

@@ -36,6 +36,25 @@ same code path:
   already uses for the identical problem, clamping above the top of the
   table and taking the absolute magnitude. Pinned by
   `tests/test_eqtl_weight_lookup.py`.
+- `eqtls_weights_summing_v`, the scalar reference that
+  `tests/test_scoring_vectorized.py` checks `_eqtl_batch` against, was
+  updated the same way. Left as it was, the agreement test would have
+  compared a snapping implementation against a non-snapping one and
+  quietly stopped testing anything.
+
+### Metacluster weights: a silent gap for new motif widths
+
+The GTRD metacluster weight table is keyed by motif length and was built
+against JASPAR 2018, whose 575 motifs it covered completely. JASPAR 2026
+introduced widths the table does not carry (4, 22, 23 and 30 nt, covering
+5 of 1019 motifs). The batch scoring path returned 0 for those without
+comment, and the scalar path raised `KeyError` on the same input.
+
+- Both paths now return 0 and log a warning once per unseen motif length,
+  so the gap is discoverable rather than silent, and the two paths agree.
+- This does not fix the underlying data gap: those 5 motifs still score 0
+  for one of the strongest evidence layers. Rebuilding the table over the
+  JASPAR 2026 width range is the real fix.
 
 Note for anyone comparing against published results: the eQTL term was
 zero in the version used for the benchmarks in

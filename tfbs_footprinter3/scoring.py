@@ -14,7 +14,6 @@ import logging
 import math
 import time
 from bisect import bisect_left
-from functools import lru_cache
 
 import numpy as np
 
@@ -271,18 +270,33 @@ def _gtex_weight_lookup(magnitudes, gtex_weights_dict):
     return np.array([gtex_weights_dict[k] for k in keys[idx]], dtype=np.float64)
 
 
-@lru_cache(maxsize=8)
-def _gtex_sorted_keys_cached(key_tuple):
-    return np.array(key_tuple, dtype=np.float64)
+# Identity-keyed memo for derived views of the big per-species weight tables.
+# Building a tuple of every key just to reach an lru_cache would be O(n log n)
+# on each of up to ~1000 per-TF calls per transcript, which measurably
+# dominated scoring (3.3x slowdown when first introduced). The source dict is
+# held in the cache entry so its id() cannot be reused by a later object.
+_DERIVED_VIEW_CACHE = {}
+
+
+def _derived_view(source, kind, build):
+    key = (id(source), kind)
+    entry = _DERIVED_VIEW_CACHE.get(key)
+    if entry is not None and entry[0] is source:
+        return entry[1]
+    value = build(source)
+    _DERIVED_VIEW_CACHE.clear()
+    _DERIVED_VIEW_CACHE[key] = (source, value)
+    return value
 
 
 def _gtex_sorted_keys(gtex_weights_dict):
-    """Sorted key array for the weights table, cached per distinct table."""
+    """Sorted key array for the weights table, memoized per table object."""
 
     if not gtex_weights_dict:
         return np.empty(0, dtype=np.float64)
 
-    return _gtex_sorted_keys_cached(tuple(sorted(gtex_weights_dict)))
+    return _derived_view(gtex_weights_dict, "gtex_keys",
+                         lambda d: np.array(sorted(d), dtype=np.float64))
 
 
 def _eqtl_batch(motif_starts, motif_ends, eqtl_starts, eqtl_ends, eqtl_mags,
@@ -482,11 +496,6 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
     return eqtl_weights_sum
 
 
-@lru_cache(maxsize=8)
-def _upper_key_index(keys):
-    return {k.upper(): k for k in keys}
-
-
 def resolve_tf_cage_key(tf_name, TF_cage_dict):
     """Map a JASPAR TF key onto the CAGE-correlation dictionary's key.
 
@@ -511,7 +520,10 @@ def resolve_tf_cage_key(tf_name, TF_cage_dict):
     if bare in TF_cage_dict:
         return bare
 
-    return _upper_key_index(tuple(TF_cage_dict)).get(bare.upper())
+    index = _derived_view(TF_cage_dict, "upper_keys",
+                          lambda d: {k.upper(): k for k in d})
+
+    return index.get(bare.upper())
 
 
 def cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, TF_cage_dict, tf_name):

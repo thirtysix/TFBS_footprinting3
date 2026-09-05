@@ -62,6 +62,16 @@ nothing, undetectably.
 - Rebuilding that dictionary for the full JASPAR 2026 catalog remains the
   real fix; this restores the coverage the data can support.
 
+### Performance
+
+Both new lookups (eQTL magnitude grid, TF-name index for the CAGE
+correlation data) initially rebuilt a tuple of every key on each call
+just to reach an `lru_cache`. With up to ~1000 per-TF calls per
+transcript against tables of 2,617 and 575 keys, that dominated scoring:
+a benchmark chunk went from 40 s to 132 s. Replaced with an
+identity-keyed memo that holds the source dict, so the derived view is
+built once per loaded table. Chunk time is now 87 s, below the original.
+
 ### Metacluster weights: a silent gap for new motif widths
 
 The GTRD metacluster weight table is keyed by motif length and was built

@@ -482,6 +482,38 @@ def eqtls_weights_summing(eqtl_occurrence_log_likelihood, ens_gene_id, target_sp
     return eqtl_weights_sum
 
 
+@lru_cache(maxsize=8)
+def _upper_key_index(keys):
+    return {k.upper(): k for k in keys}
+
+
+def resolve_tf_cage_key(tf_name, TF_cage_dict):
+    """Map a JASPAR TF key onto the CAGE-correlation dictionary's key.
+
+    Since 0.1.0 the TF identifier carried through scoring is the composite
+    `{tf_name}__{matrix_id}` (and `cli.py` upper-cases it), but
+    `{species}.CAGE.jasparTFs.dict.json` was never rebuilt for JASPAR 2026 --
+    it still holds the 575 bare JASPAR 2018 names. The result was that *zero*
+    of the 1019 motifs matched and the expression-correlation term was
+    identically 0 for every hit, silently removing one of the seven advertised
+    evidence layers.
+
+    Strip the matrix id and fall back to a case-insensitive match, which
+    recovers 597 of the 1019 motifs (the rest are TFs the 2018-era CAGE
+    correlation data simply does not cover). Returns None when there is no
+    match, which the caller treats as "no CAGE data for this TF".
+    """
+
+    if tf_name in TF_cage_dict:
+        return tf_name
+
+    bare = tf_name.rsplit("__", 1)[0] if "__" in tf_name else tf_name
+    if bare in TF_cage_dict:
+        return bare
+
+    return _upper_key_index(tuple(TF_cage_dict)).get(bare.upper())
+
+
 def cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, TF_cage_dict, tf_name):
     """
     Extract transcript relevant cages (target_cages) once for each TF under analysis.
@@ -497,8 +529,9 @@ def cage_correlations_summing_preparation(gene_name, transcript_id, cage_dict, T
     if gene_name in cage_dict:
         target_cages = [x[0].replace("hg_", "").replace(".1", "") for x in cage_dict[gene_name]]
 
-    if tf_name in TF_cage_dict:
-        tf_cages = [x[0].replace("hg_", "").replace(".1", "") for x in TF_cage_dict[tf_name]]
+    tf_cage_key = resolve_tf_cage_key(tf_name, TF_cage_dict)
+    if tf_cage_key is not None:
+        tf_cages = [x[0].replace("hg_", "").replace(".1", "") for x in TF_cage_dict[tf_cage_key]]
 
     return target_cages, tf_cages
 

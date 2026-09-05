@@ -42,6 +42,26 @@ same code path:
   compared a snapping implementation against a non-snapping one and
   quietly stopped testing anything.
 
+### Expression-correlation layer was dead since 0.1.0
+
+The composite TF naming introduced with JASPAR 2026 broke the lookup into
+the CAGE expression-correlation data. Scoring carries
+`{tf_name}__{matrix_id}` (upper-cased by `cli.py`), but
+`{species}.CAGE.jasparTFs.dict.json` was never rebuilt and still holds the
+575 *bare* JASPAR 2018 names, so `if tf_name in TF_cage_dict` matched
+**0 of 1019** motifs and `corr. weight sum` was identically zero for every
+hit -- a second one of the seven advertised evidence layers contributing
+nothing, undetectably.
+
+- `resolve_tf_cage_key()` now strips the matrix id and falls back to a
+  case-insensitive match, recovering **597 of 1019** motifs (the remainder
+  are TFs the 2018-era correlation data does not cover at all).
+- Pinned by `tests/test_tf_cage_key_resolution.py`, including the dimer
+  case (`NR1H3::RXRA__MA0074.1`), where `::` must not be confused with the
+  `__` matrix-id separator.
+- Rebuilding that dictionary for the full JASPAR 2026 catalog remains the
+  real fix; this restores the coverage the data can support.
+
 ### Metacluster weights: a silent gap for new motif widths
 
 The GTRD metacluster weight table is keyed by motif length and was built

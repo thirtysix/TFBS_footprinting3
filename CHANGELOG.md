@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.6 — 2026-10-21
 
 Downloaded species data is now verified before it is unpacked.
 

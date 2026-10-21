@@ -58,4 +58,5 @@ tfbs_footprinter3/data/*
 !tfbs_footprinter3/data/pwms.json
 !tfbs_footprinter3/data/JASPAR_2026_pwms.json
 !tfbs_footprinter3/data/species_nt_freq.json
+!tfbs_footprinter3/data/experimental_data_sha256.json
 NEXT_STEPS.md

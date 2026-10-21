@@ -7,3 +7,5 @@ include README.md
 include tfbs_footprinter3/data/pwms.json
 include tfbs_footprinter3/data/JASPAR_2026_pwms.json
 include tfbs_footprinter3/data/species_nt_freq.json
+# SHA-256 of every S3 data tarball; downloads are verified against it before extraction.
+include tfbs_footprinter3/data/experimental_data_sha256.json

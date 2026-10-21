@@ -19,6 +19,8 @@ package directory whether the caller is this module or the monolith.
 """
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 import tarfile
@@ -37,6 +39,81 @@ from tfbs_footprinter3.io_utils import (
 
 script_dir = os.path.dirname(__file__)
 AWS_SERVER = "https://s3.us-east-2.amazonaws.com"
+
+# SHA-256 of every data tarball in the bucket, shipped inside the package rather than fetched from
+# the bucket: whoever can write to the bucket could rewrite a checksum file stored next to the
+# tarballs too. A tarball that does not match is never extracted. Regenerate with
+# hpc/build_data_manifest.py whenever a tarball is (re)published, and release the package with it.
+DATA_MANIFEST = os.path.join(script_dir, "data", "experimental_data_sha256.json")
+# Set to 1 to accept a tarball that this release has no checksum for (data published after the
+# release). A tarball that has a checksum must still match it.
+ALLOW_UNPINNED_ENV = "TFBS_FOOTPRINTER3_ALLOW_UNPINNED"
+
+
+class DataIntegrityError(RuntimeError):
+    """A downloaded data tarball failed its checksum or contains unsafe members."""
+
+
+def _pinned_hashes() -> dict:
+    try:
+        with open(DATA_MANIFEST) as fh:
+            return json.load(fh).get("files", {})
+    except (OSError, ValueError):
+        return {}
+
+
+def verify_download(path: str, name: str, pinned: dict | None = None) -> None:
+    """Raise DataIntegrityError unless the file at `path` has the SHA-256 pinned for `name`."""
+    pinned = _pinned_hashes() if pinned is None else pinned
+    expected = (pinned.get(name) or {}).get("sha256")
+    if expected is None:
+        if os.environ.get(ALLOW_UNPINNED_ENV) == "1":
+            logging.warning("%s has no pinned checksum in this release; accepted because %s=1", name, ALLOW_UNPINNED_ENV)
+            return
+        raise DataIntegrityError(
+            f"{name} has no pinned checksum in this release of tfbs_footprinter3. Upgrade the package, "
+            f"or set {ALLOW_UNPINNED_ENV}=1 to accept data published after this release.")
+    digest = hashlib.sha256()
+    with open(path, "rb") as fh:
+        for chunk in iter(lambda: fh.read(1 << 20), b""):
+            digest.update(chunk)
+    if digest.hexdigest() != expected:
+        raise DataIntegrityError(
+            f"{name} does not match its pinned checksum (got {digest.hexdigest()}, expected {expected}). "
+            f"It was not extracted. The file on the server may have been tampered with; please report "
+            f"this at https://github.com/thirtysix/TFBS_footprinting3/issues.")
+
+
+def safe_extract(tar_path: str, dest: str) -> None:
+    """Extract a tarball refusing absolute paths, `..`, links and device files. Python's own
+    "data" filter does this where available (3.12, and 3.9-3.11 security releases); older
+    interpreters get the same checks here."""
+    with tarfile.open(tar_path) as tar:
+        if hasattr(tarfile, "data_filter"):
+            try:
+                tar.extractall(dest, filter="data")
+            except tarfile.FilterError as e:
+                raise DataIntegrityError(f"unsafe member in {os.path.basename(tar_path)}: {e}") from e
+            return
+        root = os.path.realpath(dest)
+        for member in tar.getmembers():
+            target = os.path.realpath(os.path.join(dest, member.name))
+            if not (member.isfile() or member.isdir()) or os.path.isabs(member.name) \
+                    or os.path.commonpath([root, target]) != root:
+                raise DataIntegrityError(f"unsafe member in {os.path.basename(tar_path)}: {member.name!r}")
+        tar.extractall(dest)
+
+
+def fetch_and_extract(url: str, tar_path: str, dest: str) -> None:
+    """Download `url` to `tar_path`, verify it against the pinned checksum, then extract it into
+    `dest`. A tarball that fails verification is deleted, never extracted."""
+    urllib.request.urlretrieve(url, tar_path)
+    try:
+        verify_download(tar_path, os.path.basename(tar_path))
+        safe_extract(tar_path, dest)
+    except DataIntegrityError:
+        os.remove(tar_path)
+        raise
 
 
 def experimentalDataUpdater(exp_data_update):
@@ -75,10 +152,13 @@ def experimentalDataUpdater(exp_data_update):
         logging.info(" ".join(["Downloading most current experimental data."]))
 
         try:
-            urllib.request.urlretrieve(experimental_data_url, experimental_data_down_loc)
-            tar = tarfile.open(experimental_data_down_loc)
-            tar.extractall(experimental_data_dir)
+            fetch_and_extract(experimental_data_url, experimental_data_down_loc, experimental_data_dir)
             experimental_data_present = True
+
+        except DataIntegrityError as e:
+            logging.error(str(e))
+            print(f"Error: {e}")
+            experimental_data_present = False
 
         except:
             logging.warning(" ".join(["Error in downloading experimental data.  Check your internet connection."]))
@@ -104,9 +184,11 @@ def experimentaldata(target_species):
         logging.info("Downloading most current experimental data for %s." % target_species)
 
         try:
-            urllib.request.urlretrieve(experimental_data_species_url, experimental_data_species_dir_tar)
-            tar = tarfile.open(experimental_data_species_dir_tar)
-            tar.extractall(experimental_data_dir)
+            fetch_and_extract(experimental_data_species_url, experimental_data_species_dir_tar, experimental_data_dir)
+
+        except DataIntegrityError as e:
+            logging.error(str(e))
+            print(f"Error: {e}")
 
         except:
             logging.warning(" ".join(["Error in downloading experimental data.  Check your internet connection."]))
@@ -157,9 +239,11 @@ def experimentalDataUpdater_beta():
 
         try:
             urllib.request.urlretrieve(current_version_url, experimental_data_dir)
-            urllib.request.urlretrieve(experimental_data_url, experimental_data_down_loc)
-            tar = tarfile.open(experimental_data_down_loc)
-            tar.extractall(experimental_data_dir)
+            fetch_and_extract(experimental_data_url, experimental_data_down_loc, experimental_data_dir)
+
+        except DataIntegrityError as e:
+            logging.error(str(e))
+            print(f"Error: {e}")
 
         except:
             logging.warning(" ".join(["Error in downloading experimental data.  Check your internet connection."]))

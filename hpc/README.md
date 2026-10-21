@@ -48,6 +48,8 @@ python hpc/build_cas_pvalues.py --species all
 python hpc/publish_to_s3.py --species mus_musculus --dry-run   # inspect locally first
 python hpc/publish_to_s3.py --species mus_musculus             # actual upload
 python hpc/publish_to_s3.py --species all                      # batch
+# Then re-pin the checksums the package verifies downloads against, commit, and release:
+python hpc/build_data_manifest.py --only mus_musculus.tar.gz   # or no args to re-hash every tarball
 ```
 
 ## Key design decisions

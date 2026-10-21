@@ -1,0 +1,1274 @@
+{
+ "bucket": "https://s3.us-east-2.amazonaws.com/tfbssexperimentaldata",
+ "generated": "2026-10-21",
+ "files": {
+  "acanthochromis_polyacanthus.tar.gz": {
+   "sha256": "ed60b82de422b615e75d94175d48f9cbb38034401d79ea3ebfe2f25de4fe30e6",
+   "size": 6990859
+  },
+  "accipiter_nisus.tar.gz": {
+   "sha256": "82f0431d69d68df96dfcf5c10e5486b7d1c14e16ae342882fb9439290673828a",
+   "size": 1871961
+  },
+  "ailuropoda_melanoleuca.tar.gz": {
+   "sha256": "52b68442c80aee06eb159a8119646a3fd85713d27d54a399be7ec7d8a476dd82",
+   "size": 11497837
+  },
+  "amazona_collaria.tar.gz": {
+   "sha256": "6b889b27517b04629f9f0e6192d23a0bb5241a687525e081f8a6e3eee8c7cf57",
+   "size": 1813044
+  },
+  "amphilophus_citrinellus.tar.gz": {
+   "sha256": "d9358f723bd77670c62c8f727aeb5eda13b53d14601fdd57eb4956258956d14a",
+   "size": 6233287
+  },
+  "amphiprion_ocellaris.tar.gz": {
+   "sha256": "46304d49eaf605c4eb9191c51c95488f7c95e746017ea6f35e4e0bcfe2a4c9a7",
+   "size": 6293764
+  },
+  "amphiprion_percula.tar.gz": {
+   "sha256": "db560d2343938c8c01691f74779f1f3729940e12139069ef622fe628dcb9dc10",
+   "size": 7606675
+  },
+  "anabas_testudineus.tar.gz": {
+   "sha256": "d322b79dbfd7b89b6c1e2d0a2d6c8c5a7628d626c8f80a1f705b054fc689d0a5",
+   "size": 6032494
+  },
+  "anas_platyrhynchos.tar.gz": {
+   "sha256": "9842da72caba81194670d40009a297c6fdc83dbe0478c23ddd1700bf48e09722",
+   "size": 1864436
+  },
+  "anas_platyrhynchos_platyrhynchos.tar.gz": {
+   "sha256": "31065f3461320a14a9ff2e7ed2bc057cbda48633a54390290bb139756febc863",
+   "size": 6369306
+  },
+  "anas_zonorhyncha.tar.gz": {
+   "sha256": "b35d18b7fc848ce6626cf158ceacfe986408a99c6928ab0b783f7bf9d7cdd000",
+   "size": 1905824
+  },
+  "anolis_carolinensis.tar.gz": {
+   "sha256": "99af4c7b143365a4454a14faa1d467534451b9ec8094720309eabe35dbf02c51",
+   "size": 5250583
+  },
+  "anser_brachyrhynchus.tar.gz": {
+   "sha256": "e784d75e19c0e33ce3b9ee7abfb4f597892668e2c5ae00e725a1d80774d3d0e2",
+   "size": 7733708
+  },
+  "anser_cygnoides.tar.gz": {
+   "sha256": "8202124a55c5f41c686d0afc058308fa9249e75eb32f105824024611a20fb3e9",
+   "size": 1892227
+  },
+  "aotus_nancymaae.tar.gz": {
+   "sha256": "c5f6d27e37504d5fbe61b4664f2c052645b03ed5b4c7d8aea918b20c6d3fe992",
+   "size": 16693299
+  },
+  "apteryx_haastii.tar.gz": {
+   "sha256": "2249fc5c1f017db5a7c249fc616325b016a751017ea86d44d6b15947fbb898f0",
+   "size": 1927015
+  },
+  "apteryx_owenii.tar.gz": {
+   "sha256": "eb4413843160dee6032226255776cc656ef7042ef2fa7cc6f6452a2843175558",
+   "size": 1829421
+  },
+  "apteryx_rowi.tar.gz": {
+   "sha256": "4b1bd7b51a37eebd405e4d9d82f3ad72fff271e9c758dc327ace9da60d763cec",
+   "size": 1841626
+  },
+  "aquila_chrysaetos_chrysaetos.tar.gz": {
+   "sha256": "2896e7fc98c13043b0da21ce5ced0749715b00f3e2ea1920fca946bd0a9e53ab",
+   "size": 7019776
+  },
+  "astatotilapia_calliptera.tar.gz": {
+   "sha256": "28eef8e1f2f2cb8e079ad49a4b722ae779ca20fb71f3de52fc5594e3ebc18854",
+   "size": 6178088
+  },
+  "astyanax_mexicanus.tar.gz": {
+   "sha256": "4522c72498c0a17328c7d7ea1401017d5d0036d0e823924a2cbc08dac6bd5b01",
+   "size": 2469211
+  },
+  "astyanax_mexicanus_pachon.tar.gz": {
+   "sha256": "5949bde4617ecfed9fc717ddb96d5d0049bce3f2477d366d323007296b2db2b1",
+   "size": 2038453
+  },
+  "athene_cunicularia.tar.gz": {
+   "sha256": "422b940f48f07bfd56fdae4f1b53a45d949409df5975c59f091dac9550b088de",
+   "size": 1609530
+  },
+  "balaenoptera_musculus.tar.gz": {
+   "sha256": "d07d3fc4aa30d64b452682dbcdd2c2c186772055ec8cf6f2b94daa8d81ddd0f7",
+   "size": 8723813
+  },
+  "betta_splendens.tar.gz": {
+   "sha256": "78c06e76c29011e10a0c83bb628f1a444eb635fa52a7f5fc5eaa3de63d2f2a3d",
+   "size": 5603481
+  },
+  "bison_bison_bison.tar.gz": {
+   "sha256": "570a7c7ef0f91dbecceae2cc957384401674afcc88653bb4bd83c817de7485db",
+   "size": 12541484
+  },
+  "bos_grunniens.tar.gz": {
+   "sha256": "76eba8f6b20619ccc2c53c77ea9efdad862b833d52cf2990ed5a60a941a6f639",
+   "size": 12141341
+  },
+  "bos_indicus_hybrid.tar.gz": {
+   "sha256": "0fd20d30727a235b116ca9bc39de9bf5dca7b029028b5994a38cec1923b42808",
+   "size": 13086167
+  },
+  "bos_mutus.tar.gz": {
+   "sha256": "b4190f3f87d0645b86df5f5d844f43122b3875d5303af9093ca9a6eeb2ad4732",
+   "size": 12870410
+  },
+  "bos_taurus.tar.gz": {
+   "sha256": "7e0ef320c2ce9821f35c10e680a88221273b630123a00e57947bcad2a882a86c",
+   "size": 13108064
+  },
+  "bos_taurus_hybrid.tar.gz": {
+   "sha256": "6da377dae4f5e20ea56b8c834f35dfa8f9517ef977db96b15ea7c0972a4d0836",
+   "size": 2014259
+  },
+  "bubo_bubo.tar.gz": {
+   "sha256": "d31313767b624fecb92ccc28d5bd4ee9e4fe0b3ff3bcbc718335ab4694e1a925",
+   "size": 1637938
+  },
+  "buteo_japonicus.tar.gz": {
+   "sha256": "e74f97381fc5d1681bcc301053a6f25e6d59f250e15af24153e552880d19f633",
+   "size": 1718757
+  },
+  "caenorhabditis_elegans.tar.gz": {
+   "sha256": "149683be2c3d781d6e22c132de6c6e491cd1369165d421f7a938120bbdce9af0",
+   "size": 303400
+  },
+  "cairina_moschata_domestica.tar.gz": {
+   "sha256": "b19a15087dcc9adb3ce67e23c4940b5c5590a0317e084740eb7b974db122c93d",
+   "size": 1870091
+  },
+  "calidris_pugnax.tar.gz": {
+   "sha256": "b9777f4576249072728463810c6ea507938a19a5996cb6773c6d78c23ed58a3c",
+   "size": 1855807
+  },
+  "calidris_pygmaea.tar.gz": {
+   "sha256": "ba1f23790a49880a4e0831de5313384aa91d3bcc287fae8fe1390d998efbb5aa",
+   "size": 1841046
+  },
+  "callithrix_jacchus.tar.gz": {
+   "sha256": "b910fbafcb8af4dcd1042604702a2b3b81b4c92bead55445685ee8483f234c0f",
+   "size": 16329855
+  },
+  "callorhinchus_milii.tar.gz": {
+   "sha256": "c4dd06bdc91aae5f0941dcc7b8749fd2785ad305556015cd81df80d0987227af",
+   "size": 2017727
+  },
+  "camarhynchus_parvulus.tar.gz": {
+   "sha256": "e00286bb2de981ddb681774dfd5779403de12004d9961a5aa92c75371cdb97af",
+   "size": 1504714
+  },
+  "camelus_dromedarius.tar.gz": {
+   "sha256": "ae1e1a22aff23f611b24752e6b14147225927049e47fd1ff4291c82d5520bfdc",
+   "size": 7329531
+  },
+  "canis_lupus_dingo.tar.gz": {
+   "sha256": "35a1b67ca26852f18ca7e7665a49191f1fb94f61298e192beaff6ed31466aa1a",
+   "size": 11934424
+  },
+  "canis_lupus_familiaris.tar.gz": {
+   "sha256": "d17c8bc5b1b962c1e672d3372fc2ecf2bcaac8dc66786a652ba72a91576f94cb",
+   "size": 11812343
+  },
+  "canis_lupus_familiarisbasenji.tar.gz": {
+   "sha256": "1b61acea1ae516c90b75ca996b794de7b80d9e0504c8f874a093928b526a74a5",
+   "size": 1745333
+  },
+  "canis_lupus_familiarisboxer.tar.gz": {
+   "sha256": "6d87fedb081a2369d9d5d762f907d2c8342e070444534bef1c1428469ced846d",
+   "size": 1504711
+  },
+  "canis_lupus_familiarisgreatdane.tar.gz": {
+   "sha256": "c02f1de3c1c360b77ce3b51491efce0a78bb55ed657eb9634454c998cf73a76d",
+   "size": 1738260
+  },
+  "canis_lupus_familiarisgsd.tar.gz": {
+   "sha256": "a8bb7295a29b811e7721a97bec869f69c26f16bbce70916e4434e1b8da686807",
+   "size": 1505821
+  },
+  "capra_hircus.tar.gz": {
+   "sha256": "1467879aa30afa5af543ea7b5e805456389d1978bad83bdc206ab53d7f53b70e",
+   "size": 11906066
+  },
+  "capra_hircus_blackbengal.tar.gz": {
+   "sha256": "36f975e3a224fd80870aaadaadd6f8fc59b37ec78fbbfb8951841fafb897c1d4",
+   "size": 1945191
+  },
+  "carassius_auratus.tar.gz": {
+   "sha256": "7e5d4c738a6de6ce7d42c981b597f6d68ce6544b1912097c43ea5971d3190579",
+   "size": 3625308
+  },
+  "carlito_syrichta.tar.gz": {
+   "sha256": "f878ea71035e78470b0753b2cad8b3a7e580ca98f42007046728d88e53583674",
+   "size": 15801450
+  },
+  "castor_canadensis.tar.gz": {
+   "sha256": "7b3ebc5b06509087b3ab76520614e85d82ec4070ef066957285ad5306c735b15",
+   "size": 1862082
+  },
+  "catagonus_wagneri.tar.gz": {
+   "sha256": "e5002254158e7ccc5701ed446060c275b70f55f6124711a71a5608db0afdda56",
+   "size": 8921239
+  },
+  "catharus_ustulatus.tar.gz": {
+   "sha256": "4812b0141a3d4c7d50b8134376cdd492f15fd98bc4d0c0213a764f161d7edae4",
+   "size": 1871734
+  },
+  "cavia_aperea.tar.gz": {
+   "sha256": "e814e294592a7eb29a6b55c27438437710415bcd48ece5ca6c4104108cd27ed6",
+   "size": 1500214
+  },
+  "cavia_porcellus.tar.gz": {
+   "sha256": "e0033398970007ad8a21b7bde04e74557ccdb356a39c25c3e9621cc3bfd1d1ab",
+   "size": 3196848
+  },
+  "cebus_imitator.tar.gz": {
+   "sha256": "26ef3eebeb4325c83f059996377bfee986bbd25c89aac99894ed93ce18d60be1",
+   "size": 16221607
+  },
+  "cercocebus_atys.tar.gz": {
+   "sha256": "5b7b9e5f4a90eb1cc165a9d6115a95dc72b9e2e87540f9f13b397460e843b306",
+   "size": 17000323
+  },
+  "cervus_hanglu_yarkandensis.tar.gz": {
+   "sha256": "77be049286fa00dfa45db6c6ff5d79fe1ee7906ed344cc428f660d72f9fce426",
+   "size": 11816571
+  },
+  "chelonoidis_abingdonii.tar.gz": {
+   "sha256": "00f66ce90757f40ac929178fff63c9f6b9036377e412ca3dfff5b003d9f58397",
+   "size": 6940112
+  },
+  "chelydra_serpentina.tar.gz": {
+   "sha256": "f7814499c04e7d9f8f818b994f8dbab57cb0ba0a80a69fab6e943619a12eaa88",
+   "size": 1587243
+  },
+  "chinchilla_lanigera.tar.gz": {
+   "sha256": "9fa8723cd096128de46e8f24a9d4525287d65c4d9f67ab0ff27957ae6e1d3328",
+   "size": 15571467
+  },
+  "chlorocebus_sabaeus.tar.gz": {
+   "sha256": "3e1e827f1dc46d6c1fac20590b4d3601b7d36e78764c9e96789a19fffdf8019c",
+   "size": 13938206
+  },
+  "choloepus_hoffmanni.tar.gz": {
+   "sha256": "971eb19baddd9c5ee00def449bfac7ff118078c98916c59182743a862b6ea7db",
+   "size": 12238374
+  },
+  "chrysemys_picta_bellii.tar.gz": {
+   "sha256": "297b115158f2b378b72bf1029f396539f829f44d8429344b3a279ba9c307865b",
+   "size": 7347822
+  },
+  "chrysolophus_pictus.tar.gz": {
+   "sha256": "91c4a75b5ca06329b3b59703ff1ed560b5adbfb28208a2250939c26ce9a608c9",
+   "size": 1623134
+  },
+  "ciona_intestinalis.tar.gz": {
+   "sha256": "c9a041cc4ce54730b880428a974af860af4ef5b450bca0dc311222d1da9ab2ac",
+   "size": 1501773
+  },
+  "ciona_savignyi.tar.gz": {
+   "sha256": "b9aa4f0b97be476c4d471180b70b7dc1925865a7ca7abdb3ee7ab046e2b21b84",
+   "size": 1447333
+  },
+  "clupea_harengus.tar.gz": {
+   "sha256": "5c26fd69e189e2689f3a8e6e966c76cb309ef8bd5fade409756aeb21b2d67fd3",
+   "size": 3345686
+  },
+  "colobus_angolensis_palliatus.tar.gz": {
+   "sha256": "1a86c30779285537c11cb44404e3d8982d16915b06d87035389ccb630f4ec1d4",
+   "size": 1502224
+  },
+  "corvus_moneduloides.tar.gz": {
+   "sha256": "3dd2cd58a2ab5a46e4ddbcd95b6c75dcde9bac3d8f51149cd64377ef18105bdf",
+   "size": 1505377
+  },
+  "cottoperca_gobio.tar.gz": {
+   "sha256": "32c11db9252a5290276126849820168b98dd04b898b2c2042c203618cd58eb8f",
+   "size": 7069703
+  },
+  "coturnix_japonica.tar.gz": {
+   "sha256": "a77d666c59944447ea3ef0f3db06dc97580b2a899f6aed3373cd6f8f1c4dbc44",
+   "size": 6515709
+  },
+  "cricetulus_griseus_chok1gshd.tar.gz": {
+   "sha256": "7135ae7e1a9202931b83891a5a0ac64747d8fe0551d6601ef4b84f74e90b641d",
+   "size": 5739518
+  },
+  "cricetulus_griseus_crigri.tar.gz": {
+   "sha256": "81a3a007db924f99692ffdceb28e4ddcb3e880be7f670eb10c09cfd4a7f8f424",
+   "size": 1869871
+  },
+  "cricetulus_griseus_picr.tar.gz": {
+   "sha256": "132891e20b5252669fe0a33912f8a549ba72aad81c9bcdf1dde40c7697647035",
+   "size": 1669494
+  },
+  "crocodylus_porosus.tar.gz": {
+   "sha256": "49bd97c5f2432d82c9445111b857d5b9071db0913a591880c461db954dd810b7",
+   "size": 5435141
+  },
+  "cyanistes_caeruleus.tar.gz": {
+   "sha256": "507ec9647d0f4b70bab11d2a4e2efaad2ef0404612c10e04d3e0cc216bf1d5a2",
+   "size": 1897405
+  },
+  "cyclopterus_lumpus.tar.gz": {
+   "sha256": "1c2d0f87d42070e0f9132ea293bc8b9eac4c45dc9e24a5889c411e05ff88fb99",
+   "size": 3487612
+  },
+  "cynoglossus_semilaevis.tar.gz": {
+   "sha256": "a774e1ff7b9540a7754fb50fc834ca231dda38a9666ca247c5cd456781eb38a6",
+   "size": 3873793
+  },
+  "cyprinodon_variegatus.tar.gz": {
+   "sha256": "dcbfcb6c30fd368de6ab532410f2d3b7382a55cf68e2e346103cfff6f2f915c9",
+   "size": 6298216
+  },
+  "cyprinus_carpio_carpio.tar.gz": {
+   "sha256": "3456cc56b585005d3502e4bb32d66103a50abdbb85971b201458fc87413d7dce",
+   "size": 3764313
+  },
+  "cyprinus_carpio_germanmirror.tar.gz": {
+   "sha256": "35b98c5a97e5eeff25032198607eb642b9bc08b3f5130b60f16ed1c19e187f5d",
+   "size": 2627753
+  },
+  "cyprinus_carpio_hebaored.tar.gz": {
+   "sha256": "809cfe2d50e5edc4b3a478b1cd98419442efe77aa61a10b59fd2ffb993e0ae06",
+   "size": 2637410
+  },
+  "cyprinus_carpio_huanghe.tar.gz": {
+   "sha256": "a197264a0efc368a3e4141180de94eb4f648705f5d7629bf6cae2102bf8fc07e",
+   "size": 1504022
+  },
+  "danio_rerio.tar.gz": {
+   "sha256": "d94c4fce4714bc7c08d937e0861cc213367580bbe446b4e41c36fa562464fe08",
+   "size": 3106021
+  },
+  "dasypus_novemcinctus.tar.gz": {
+   "sha256": "961784a3ca0d406882718696056e7a7c462f971d3088ff51a61021b669c655f6",
+   "size": 15706416
+  },
+  "delphinapterus_leucas.tar.gz": {
+   "sha256": "04d5a73893db4c35337c212d770ccce60402bbfc63e59ddc1dde088b0233fafb",
+   "size": 8352200
+  },
+  "denticeps_clupeoides.tar.gz": {
+   "sha256": "b6354b1495719355a3aa563eaf87605b62ee83380a25b8db243d5d8499001625",
+   "size": 3362261
+  },
+  "dicentrarchus_labrax.tar.gz": {
+   "sha256": "946f38aa17f37d56902367b4cc0c8dc26a504b24089c96d4d53c1cafa0dee2c9",
+   "size": 6347461
+  },
+  "dipodomys_ordii.tar.gz": {
+   "sha256": "17cb1330c510b2f0ac720767321fe7bb885bd7c0ed6633c6d06352578bbdfc9f",
+   "size": 13956653
+  },
+  "dromaius_novaehollandiae.tar.gz": {
+   "sha256": "22a554cdc595ffedd26334bbcd542d5a04be0e3562caead59d4c5c1da2d3a5ff",
+   "size": 1855202
+  },
+  "drosophila_melanogaster.tar.gz": {
+   "sha256": "5c173f018dafd7a0fb3cf543a5e3b6b51615144366ab49139e60adf27b69db7c",
+   "size": 1500304
+  },
+  "echeneis_naucrates.tar.gz": {
+   "sha256": "d2aee7a59227d75db7147439d1212b520ce9064e6dbe8dc380ba77e792f96201",
+   "size": 1692527
+  },
+  "echinops_telfairi.tar.gz": {
+   "sha256": "5ea67b8a95f11478332ddc1010fc26884bc22a1336ca7949eaaab09b76fe2461",
+   "size": 11924668
+  },
+  "electrophorus_electricus.tar.gz": {
+   "sha256": "ec44acbb6e198878678cddcf3ae0ecf879ba3f3d8c64677cab309aa1ceefa5c3",
+   "size": 3250550
+  },
+  "eptatretus_burgeri.tar.gz": {
+   "sha256": "111da1d534b30e59d2de0b2969002df8ab42c63deeaabe4166dd3b303b32b712",
+   "size": 1852400
+  },
+  "equus_asinus.tar.gz": {
+   "sha256": "53dc275917c5589bfaee5146f0331d4f01dfa9f865dbb582f82e9b83d9d4f53c",
+   "size": 12325030
+  },
+  "equus_caballus.tar.gz": {
+   "sha256": "192f9e0da079661b23d5dfd7ffb5140158b9f0582327720f15ad7fb6a36039c7",
+   "size": 12435417
+  },
+  "erinaceus_europaeus.tar.gz": {
+   "sha256": "7ca12511343c09ede8449c5b89bf63cb2042a378aba1b292df9f85a4a2679328",
+   "size": 11267558
+  },
+  "erpetoichthys_calabaricus.tar.gz": {
+   "sha256": "99ac2edfd80913fc0665190e8d24851a6a0ee5f6b1c118f73a5ba36590b876df",
+   "size": 1927193
+  },
+  "erythrura_gouldiae.tar.gz": {
+   "sha256": "fa78abc102cc052f3fbcb867245dcf2be9d37f44c2911ccfe4294c04e4af8122",
+   "size": 1616688
+  },
+  "esox_lucius.tar.gz": {
+   "sha256": "286ae5300b80057bbb20de1b8eb1f80d22d71b9e7882a6a272c3cbef586ebe8a",
+   "size": 3986215
+  },
+  "falco_tinnunculus.tar.gz": {
+   "sha256": "8f98a40679231724646604047e2d082567494cd7597cd86fd6357d84aed91b83",
+   "size": 1811011
+  },
+  "felis_catus.tar.gz": {
+   "sha256": "753a325f3d495b2f73149d4a3dad29f4476d272e961e40b57890635ac84ac434",
+   "size": 12299007
+  },
+  "ficedula_albicollis.tar.gz": {
+   "sha256": "6f476eb192704b3634fea8529bb2e30013d62a58574e2572875e6ad3bffd6820",
+   "size": 8032766
+  },
+  "fukomys_damarensis.tar.gz": {
+   "sha256": "60684c714235d9d800bb2c707845fd09809d3a7050efe305fa909c9da8c7fa16",
+   "size": 1921293
+  },
+  "fundulus_heteroclitus.tar.gz": {
+   "sha256": "dc5ac2318c045b092629a0b6d69591ff543813dac739de59af66916f69860d4a",
+   "size": 6471183
+  },
+  "gadus_morhua.tar.gz": {
+   "sha256": "6b482d33f908d2deca0d1f415217d5c39605a27015376615841413563ddfd8ab",
+   "size": 4633509
+  },
+  "gallus_gallus.tar.gz": {
+   "sha256": "eca8174571480707b2def4506a257e09027cbc8d03ececaeba8dcd9288d22542",
+   "size": 6593728
+  },
+  "gallus_gallus_gca000002315v5.tar.gz": {
+   "sha256": "9f311290ecac6c97a39fc105c4b2124af2691497aff7f7cdd61a8aaa88c99d83",
+   "size": 307805
+  },
+  "gallus_gallus_gca016700215v2.tar.gz": {
+   "sha256": "1d78e457b35791ea01fa07c0aec8fc79f60992ca032caac3f94fcf8414c7a875",
+   "size": 1501553
+  },
+  "gambusia_affinis.tar.gz": {
+   "sha256": "0369b6f018e619ca8d7493e4899022b976c768da17caf71f848412de640487ba",
+   "size": 1942616
+  },
+  "gasterosteus_aculeatus.tar.gz": {
+   "sha256": "bdcfbd95204658a9d7b4d09f0b9c9d2a12487226422c257a599585c2eeae0996",
+   "size": 5595022
+  },
+  "geospiza_fortis.tar.gz": {
+   "sha256": "7c45d19c681a30e83427dea8ef41cd8db623068063d328854f8929bf7647c8b5",
+   "size": 7902390
+  },
+  "gopherus_agassizii.tar.gz": {
+   "sha256": "1ced4eff19bab296cd662e98833b51376ef5a480855918c6bce3c067d3642823",
+   "size": 1854152
+  },
+  "gopherus_evgoodei.tar.gz": {
+   "sha256": "a62504d162bb8497c361a878aac675a168ce8fd3f569a705e08b7bae88171dc6",
+   "size": 6396343
+  },
+  "gorilla_gorilla.tar.gz": {
+   "sha256": "f16548a3faeb7af22c600f0b3271d0960174b09394ed205ae62ef0d0da0b4299",
+   "size": 14965530
+  },
+  "gouania_willdenowi.tar.gz": {
+   "sha256": "d8242f6c7f6a2af5af9742e7ab42c4ef72d37804a5dc1a703a9cd4ce5e4ccad6",
+   "size": 1974548
+  },
+  "haplochromis_burtoni.tar.gz": {
+   "sha256": "7d55e590ae507d77aa39ec128058ade96e7ed15af20c28ae38ca2b8a2972dc32",
+   "size": 6697378
+  },
+  "heterocephalus_glaber_female.tar.gz": {
+   "sha256": "a8b789a139e1f6b225d2c15c6230547a0f676aee4a2fe0418c809b37a5bc4882",
+   "size": 9703727
+  },
+  "heterocephalus_glaber_male.tar.gz": {
+   "sha256": "70cb40949e44db75fc00fe34a4c01af8618b669950cedd2868bf5fd20452b0bf",
+   "size": 1560508
+  },
+  "hippocampus_comes.tar.gz": {
+   "sha256": "95d4474f61c507fe87203166164e26770907171c0a85cfefaa8b50a45a958614",
+   "size": 4644414
+  },
+  "homo_sapiens.tar.gz": {
+   "sha256": "aba6ae4d779cd552cd4ff6b2a121e9b15f45d143bbef52408226dd1710163ce2",
+   "size": 410562063
+  },
+  "hucho_hucho.tar.gz": {
+   "sha256": "f6741325851c15a41febf5cca30e0445de5b5c74ce79accd707e09679ffbdb24",
+   "size": 5467206
+  },
+  "ictalurus_punctatus.tar.gz": {
+   "sha256": "c5a287edd5ffcf17293de1a5b96a553e3bc61c7730426b176a05ceb3ac57c323",
+   "size": 3152833
+  },
+  "ictidomys_tridecemlineatus.tar.gz": {
+   "sha256": "d6e8929ff87c899991635d0b4cf1d578ee4a4c927d77c7a9f3ebf8e6726ef797",
+   "size": 15554308
+  },
+  "jaculus_jaculus.tar.gz": {
+   "sha256": "33f58f2572dbfb167d2636ef101a5590350c0af06b8a71c6d734e5ef4fced282",
+   "size": 14259180
+  },
+  "junco_hyemalis.tar.gz": {
+   "sha256": "3fade063cb3146c0d008ab99b6972132bf7b7ece36e05daa2090a04dbbf308b5",
+   "size": 1800386
+  },
+  "kryptolebias_marmoratus.tar.gz": {
+   "sha256": "7991037799899babb42003e39b1146f8405eb383bc2e993c02d2c6b4683037ae",
+   "size": 6232173
+  },
+  "labrus_bergylta.tar.gz": {
+   "sha256": "c1061c6ffc1821843f36e863a43fa447bf2d76dccd58739a10e37426aee130ec",
+   "size": 6588923
+  },
+  "larimichthys_crocea.tar.gz": {
+   "sha256": "6f283155eef1635c74e0e5e6d5c3aeb624585408bc42fcc331367dd38abbe4c6",
+   "size": 7610805
+  },
+  "lates_calcarifer.tar.gz": {
+   "sha256": "db215e8845b2eca53cedfefa94e9a14da3a825f0c8a52ac485eb559b97e0c168",
+   "size": 6925870
+  },
+  "laticauda_laticaudata.tar.gz": {
+   "sha256": "e2273f56b74e0b567d8db3d849fdf9d956c23c8ef1f107fa979bc34b7098a224",
+   "size": 4203701
+  },
+  "latimeria_chalumnae.tar.gz": {
+   "sha256": "1638a9218d3c66f599a02782b33ba80a05cc7013177751534c3ce50156cf563a",
+   "size": 1500327
+  },
+  "lepidothrix_coronata.tar.gz": {
+   "sha256": "d95042c106037b170a7e744f6443bdd560dfe5906820480564990c86214c89a8",
+   "size": 1605679
+  },
+  "lepisosteus_oculatus.tar.gz": {
+   "sha256": "f8a203dadf6f4d3f399b8fe86132d189d5ee13d872c6eabc78b682505f6dc36d",
+   "size": 2086501
+  },
+  "leptobrachium_leishanense.tar.gz": {
+   "sha256": "5dd38851224c02d478672fc92661960dba435e05bfae0ad3c98ae62aaea848c2",
+   "size": 2163170
+  },
+  "lonchura_striata_domestica.tar.gz": {
+   "sha256": "446ea0d99307d7a4d2212c7bcdf852d2faa225ad745418873295d5544d855935",
+   "size": 1900267
+  },
+  "loxodonta_africana.tar.gz": {
+   "sha256": "73a078caa6b27b1e4b7c2d2b8410d7599e3e38d0184832021bdc7ec525ba2d87",
+   "size": 3892124
+  },
+  "lynx_canadensis.tar.gz": {
+   "sha256": "10aa790ac3ddca6ead9acb8fc9a9d211518ac6f1c0908e3a73a64e3acb076911",
+   "size": 1891653
+  },
+  "macaca_fascicularis.tar.gz": {
+   "sha256": "7c7a05569c7d250eb77c3c08fbc6a3840d2b22bb4b6134932f06241239782c82",
+   "size": 14099952
+  },
+  "macaca_mulatta.tar.gz": {
+   "sha256": "1139aaf4303c61fe838ff56a45916f825fd79788031f761dfacbed682fd7cc27",
+   "size": 14211682
+  },
+  "macaca_nemestrina.tar.gz": {
+   "sha256": "498c6e2992c79badc0ab50779723127af415b0199e1e31981b129863ad1bc2ad",
+   "size": 17048950
+  },
+  "malurus_cyaneus_samueli.tar.gz": {
+   "sha256": "34ba98341be806ac5eb8d1cad5a60311b39957b27840901d9bea30f5e7683441",
+   "size": 1568560
+  },
+  "manacus_vitellinus.tar.gz": {
+   "sha256": "aab45adf03398e6d3421176716edfaba6ace57c0b44cdc5d678d651b16323896",
+   "size": 1826078
+  },
+  "mandrillus_leucophaeus.tar.gz": {
+   "sha256": "75186f5cc25f16f19dcb3b269eaa776b711ce895afb06bdb7fbcfc0409fc933b",
+   "size": 16410229
+  },
+  "marmota_marmota_marmota.tar.gz": {
+   "sha256": "ef7c2bed02ee0aaf1a87586cec007898c52dc91cc9af20bf5d0df31e8770a63c",
+   "size": 4447135
+  },
+  "mastacembelus_armatus.tar.gz": {
+   "sha256": "d6afa6360c4638c5c94bebb020e8c32f8cf019fa3e6659cf7dd596775c845db2",
+   "size": 6630162
+  },
+  "maylandia_zebra.tar.gz": {
+   "sha256": "7de18086477decdc0db70bdab82185de004db4e16e836e32c6fe8bf7f6443049",
+   "size": 7457085
+  },
+  "meleagris_gallopavo.tar.gz": {
+   "sha256": "1a35a9cd4d525413f21fbbc61ed7baac8ccf0250a05d1b44b9c2761aaba11ee2",
+   "size": 4836840
+  },
+  "melopsittacus_undulatus.tar.gz": {
+   "sha256": "8cc963ea874dea61e6467aadd02d0e66ff1edbfe0190c841b0eaa7263f6c33d6",
+   "size": 1505215
+  },
+  "meriones_unguiculatus.tar.gz": {
+   "sha256": "7bf9b9475313a45db3d5ea9fa460bf78cdd71e348c2871c9454aa65f7c17d5c8",
+   "size": 1831992
+  },
+  "mesocricetus_auratus.tar.gz": {
+   "sha256": "492b27d2b509de3e2783d2c7762cbc334f50173071e043e1ce40215bb40edaec",
+   "size": 9929455
+  },
+  "microcebus_murinus.tar.gz": {
+   "sha256": "1b8ece3d806bd35744f6d1908cd0df80154edf1700ede49f9a154d9804311ef1",
+   "size": 13141303
+  },
+  "microtus_ochrogaster.tar.gz": {
+   "sha256": "c35f8fe39bb3f076b313da43ee63049380deee3ac823d7403c2c201a10602951",
+   "size": 9077002
+  },
+  "mola_mola.tar.gz": {
+   "sha256": "3c0bb3abc941f5cdf6248a5317e5505e25aa578f6e6e132208a35eba4f63aacb",
+   "size": 1503211
+  },
+  "monodelphis_domestica.tar.gz": {
+   "sha256": "0ef10c72695a1cd6925210584ca18cfb5e91dc6e6015da3be0cc894aceebd442",
+   "size": 5410855
+  },
+  "monodon_monoceros.tar.gz": {
+   "sha256": "e2e5f9a7ca82d6c347767843d29a2c8740248f0145ae7761a0ee72275b5997c5",
+   "size": 8099392
+  },
+  "monopterus_albus.tar.gz": {
+   "sha256": "efe79770cdaaad7a2b79f137b422803cc273b5e3d15df947c77360fdee35ed5d",
+   "size": 1985878
+  },
+  "moschus_moschiferus.tar.gz": {
+   "sha256": "7c950efd4c91f3eec363dccdfed9149fa61c46253635724a5e82bad294d3181c",
+   "size": 12859164
+  },
+  "mus_caroli.tar.gz": {
+   "sha256": "d754015539e10fd8596ffb74f66af78b315ab8d2b0f62e455bd555ab9202c3d5",
+   "size": 9571229
+  },
+  "mus_musculus.tar.gz": {
+   "sha256": "2f9a5ba1d6d5018922e37bfd0d79c9489297ce222bea6b0af75ae1b3df630b21",
+   "size": 11200349
+  },
+  "mus_musculus_129s1svimj.tar.gz": {
+   "sha256": "8e71aee0e7820e02c29f00167dddc1812978f7b30c8f3bb18d40f594e822caaf",
+   "size": 1502379
+  },
+  "mus_musculus_aj.tar.gz": {
+   "sha256": "921752cf49699a801b92c2fa25b827f1f849ddc44de773a375c3882b993214a0",
+   "size": 1503191
+  },
+  "mus_musculus_akrj.tar.gz": {
+   "sha256": "7d49ebbd849640aa0da8d777f42191e5cc77023bf7625bbe5d70bf99c2b8743b",
+   "size": 1501690
+  },
+  "mus_musculus_balbcj.tar.gz": {
+   "sha256": "8033087303aec7e1a5d00139b61f01b93ac1dbe6d793f4c65f8fb5e25b90947f",
+   "size": 1502242
+  },
+  "mus_musculus_c3hhej.tar.gz": {
+   "sha256": "e4725de6bf8db732e5fb4433139160c5671a273267694b121ffeaac0b5543b43",
+   "size": 1501460
+  },
+  "mus_musculus_c57bl6nj.tar.gz": {
+   "sha256": "7e995c0bc6f8d2bb32845eedd44afc73e577c888ff7baac198df69bef81dd8d0",
+   "size": 1502033
+  },
+  "mus_musculus_casteij.tar.gz": {
+   "sha256": "01def1f424cbf5dbeba74cd7e8d4f6f715e52e04085b7c1cfc6ebecb708b7048",
+   "size": 1501271
+  },
+  "mus_musculus_cbaj.tar.gz": {
+   "sha256": "74323ab3c5942cde5b228e678ffe841042ac920560e1113a59b5ccda384b6c94",
+   "size": 1501629
+  },
+  "mus_musculus_dba2j.tar.gz": {
+   "sha256": "e47ec9b70ee4b6e83898dcb9eaee090017e83a98b298a9e6c85519ddb665e0ad",
+   "size": 1502243
+  },
+  "mus_musculus_fvbnj.tar.gz": {
+   "sha256": "98f2861741c04693894ee48d391a6272817c5c8138bba29cb502c5478021e21a",
+   "size": 1501958
+  },
+  "mus_musculus_lpj.tar.gz": {
+   "sha256": "51ecd179a261cd5e19e990113fb7973f4ee287281f16687a303e5acd37a82fea",
+   "size": 1501357
+  },
+  "mus_musculus_nodshiltj.tar.gz": {
+   "sha256": "35ff379ef16b81ead1b41cbae48a0ef78a946b76a9d647dce06b6894cbdd3884",
+   "size": 1502879
+  },
+  "mus_musculus_nzohlltj.tar.gz": {
+   "sha256": "686081d753f9023e42f9ff58a7e29ff94c9483c8be9017158e5eaff087fcac70",
+   "size": 1502028
+  },
+  "mus_musculus_pwkphj.tar.gz": {
+   "sha256": "b9436111c49a12de1c6dd0924bb837251ce8671a0dbce8a762226ddc69c95aa4",
+   "size": 1502559
+  },
+  "mus_musculus_wsbeij.tar.gz": {
+   "sha256": "47561836d9d78d82059bf69ae1d4dd5a936eb14932db6e60c70df8894a2f95c6",
+   "size": 1501830
+  },
+  "mus_pahari.tar.gz": {
+   "sha256": "e3a11a636ded028238d5c758ed677a268bdf57939bc9909ecafbb5d0bfaf0785",
+   "size": 8847425
+  },
+  "mus_spicilegus.tar.gz": {
+   "sha256": "93ab691294af1b25eccc84f394c1f9c1a4cd3c0dd3e049a8e2b6b46d07392d3d",
+   "size": 10529876
+  },
+  "mus_spretus.tar.gz": {
+   "sha256": "bfa322bef7493857b73e189c52514e02582dc749dbd946c148c1836589d93db9",
+   "size": 9751784
+  },
+  "mustela_putorius_furo.tar.gz": {
+   "sha256": "2a0ac54eb22aec69057ad14baa2e226629987cbf2fa972651a1f3268ca00f575",
+   "size": 11788253
+  },
+  "myotis_lucifugus.tar.gz": {
+   "sha256": "c72c2abb69042161fc28879a2e5e05af3058e4f5715dd53f969147518e61f53b",
+   "size": 14118222
+  },
+  "myripristis_murdjan.tar.gz": {
+   "sha256": "065f4304d363be94e3d6cea5ea3d18ed8090475a25a21d3da86f991fcdec66b5",
+   "size": 5875552
+  },
+  "naja_naja.tar.gz": {
+   "sha256": "b1c708b721e837d6af5c421dd4f5c76ca95abf08fe97eec11f89a68af6fda7f3",
+   "size": 5500544
+  },
+  "nannospalax_galili.tar.gz": {
+   "sha256": "97f32d1e625e11b0e156588b29e15627acb38bf53e0b0d0a96628c9c752fd0e6",
+   "size": 10363496
+  },
+  "neogobius_melanostomus.tar.gz": {
+   "sha256": "d3b3e2c08b7cfda90c88dca5e1bd74b435df89b157269de31f06bb9b57c6412b",
+   "size": 1940338
+  },
+  "neolamprologus_brichardi.tar.gz": {
+   "sha256": "ed2acc3347b1d16617b72bcaea663cadfaf1a326efbb9cd9d2186eae3607f50c",
+   "size": 6588291
+  },
+  "neovison_vison.tar.gz": {
+   "sha256": "5db99993ff1aaa51b53553623f210122f9d7ef759a80117360de729956e7d8c5",
+   "size": 11728722
+  },
+  "nomascus_leucogenys.tar.gz": {
+   "sha256": "be59eca1b3bc377d0d31cd2c6be52a754fc9628009ed4229725c8b39dbbfc99a",
+   "size": 13791039
+  },
+  "notamacropus_eugenii.tar.gz": {
+   "sha256": "46443a54ee38859a31a84a4c1170fd7879ffca3eba95dbc704a320a97f6870e4",
+   "size": 1491667
+  },
+  "notechis_scutatus.tar.gz": {
+   "sha256": "e4b012d9d501196d874a97b72da4a072e125e4a6573016cd56bd6ede49936edb",
+   "size": 4221987
+  },
+  "nothobranchius_furzeri.tar.gz": {
+   "sha256": "947de8163697d9a03be537a5e07f800b22dd2a5547c4db8c99d97537b2c8a25e",
+   "size": 2587069
+  },
+  "nothoprocta_perdicaria.tar.gz": {
+   "sha256": "383ed29dc5fe827cd40d1cabd7a82a6c8782528ba9d05b31b10673d4d9fd926f",
+   "size": 1507072
+  },
+  "numida_meleagris.tar.gz": {
+   "sha256": "984db5d08699ba7254b0650e45f967f2488bd4f6d120992caa7226a549a37c65",
+   "size": 1630251
+  },
+  "ochotona_princeps.tar.gz": {
+   "sha256": "ee884fed735b6e45333fb32c48fa96c1eb679516ee8227dc6e9f68925677dea5",
+   "size": 12617761
+  },
+  "octodon_degus.tar.gz": {
+   "sha256": "055cd13b8b108a5227c34aeadf41e40f53a2e0089dd8f4612e61b5a93d294574",
+   "size": 14788704
+  },
+  "oncorhynchus_kisutch.tar.gz": {
+   "sha256": "bdee95447bcaf0d1c1a2b50bc90c3cb69c7e4d019075a8a342a50de5cd662591",
+   "size": 3867111
+  },
+  "oncorhynchus_mykiss.tar.gz": {
+   "sha256": "72a722ef8dc7003cf08fec022f09c707ebaf80786f9689ecffbb6a32c52bd9a0",
+   "size": 4189163
+  },
+  "oncorhynchus_tshawytscha.tar.gz": {
+   "sha256": "9b2145472246755c1929c98b6aacf48d106801d286c799d8ba9a8f614ebdfe57",
+   "size": 4415284
+  },
+  "oreochromis_aureus.tar.gz": {
+   "sha256": "a82bca9bf2f3c20e4e1d36f46af014b587630c7a705db1aae2027a9d40a78c9e",
+   "size": 1446944
+  },
+  "oreochromis_niloticus.tar.gz": {
+   "sha256": "632fd99a630bffe4816adefb072614a731e1967393ba4779a9cc8f5fec4fec7f",
+   "size": 7991428
+  },
+  "ornithorhynchus_anatinus.tar.gz": {
+   "sha256": "1f7e8d5893a232cfab648cc57ba627ce7051fc1479ca0169f757630dea6a7eca",
+   "size": 4852942
+  },
+  "oryctolagus_cuniculus.tar.gz": {
+   "sha256": "84b37b4d842e8f4f1f756d8f4bebada1d84ad073162f6a62375602976255f9a2",
+   "size": 9762958
+  },
+  "oryzias_javanicus.tar.gz": {
+   "sha256": "f9b38802818a02c011055a38a7f66c355be038d0b815d11ed64b18bb40e59060",
+   "size": 5632390
+  },
+  "oryzias_latipes.tar.gz": {
+   "sha256": "7eddd3b2930b9d3aa21acadc6119a056a296822ad55cb73d12f6c8269232ad4f",
+   "size": 6949731
+  },
+  "oryzias_latipes_hni.tar.gz": {
+   "sha256": "1b13f464df8fa1f055ea72980c4e50275fdd4f5d335a23c4fb87c68e5700becb",
+   "size": 1980433
+  },
+  "oryzias_latipes_hsok.tar.gz": {
+   "sha256": "bfbb05f1d607a1550819b79ace4b6e4db5962b415616a6132578134a0e535c37",
+   "size": 1990248
+  },
+  "oryzias_melastigma.tar.gz": {
+   "sha256": "3aa2db88a192b0ada12b207ae8f167ee096377bbaa58d8c0a738264bdf99a95b",
+   "size": 6429497
+  },
+  "oryzias_sinensis.tar.gz": {
+   "sha256": "16a5abd602a38d01d5f80c8615b1274cc6d02412dd7fe89d29aee6af286556ca",
+   "size": 6899503
+  },
+  "otolemur_garnettii.tar.gz": {
+   "sha256": "e8601178b1612252a4074980a75b9e92c4324d70aa5a5afa9575384041ff6b99",
+   "size": 15481987
+  },
+  "otus_sunia.tar.gz": {
+   "sha256": "1d5f37a3c70eb7f7ab6abc2a3d3404f7ea84f08a6aea7f3a169c8cc9f2812d32",
+   "size": 1622930
+  },
+  "ovis_aries.tar.gz": {
+   "sha256": "235288a4b722ce3731b7ffa62516360b85861dbc8d4ba0a05a883efe8544fae4",
+   "size": 1502995
+  },
+  "ovis_aries_rambouillet.tar.gz": {
+   "sha256": "30511fa25f922c16950425a2a3aeaf0d362bcdef162f301790e6d64da4a904a8",
+   "size": 10145502
+  },
+  "pan_paniscus.tar.gz": {
+   "sha256": "e2b6486e42ef715db05d6424f46df9bd567a6a1352a0b86a5badad14ecc1581a",
+   "size": 16108813
+  },
+  "pan_troglodytes.tar.gz": {
+   "sha256": "0a04369eb4f90f43190742d2f275181c5a2c175e27e8a1bf5e82fd5d9805279f",
+   "size": 16744790
+  },
+  "panthera_leo.tar.gz": {
+   "sha256": "633b19860c0cbfdfb96c7c3062c2fa84de4881d3e2abfd2aa7c101a7be6df3ea",
+   "size": 11568424
+  },
+  "panthera_pardus.tar.gz": {
+   "sha256": "67858e0afb2756629f8d68749f59c179034e630a713b296791ede7cc6ac98e0d",
+   "size": 11421085
+  },
+  "panthera_tigris_altaica.tar.gz": {
+   "sha256": "2509e4b1ac7a75f4a60ef057e577088f6520937f0319262d09045e2bc23b1897",
+   "size": 12076575
+  },
+  "papio_anubis.tar.gz": {
+   "sha256": "bee141ba1a9d17a508d327d93e59c335d49242d778f9f13d45b9883d1babbc6f",
+   "size": 16363873
+  },
+  "parambassis_ranga.tar.gz": {
+   "sha256": "8669d4a44546e8789eff9d0641974a7ab031bbf06854e7cf760d908f82a214b7",
+   "size": 1503698
+  },
+  "paramormyrops_kingsleyae.tar.gz": {
+   "sha256": "0cf6ef770337e4bce7b75a86587387b086e8152dc082f7d35507dec8aebfe05a",
+   "size": 3751526
+  },
+  "parus_major.tar.gz": {
+   "sha256": "ef77537a7755ed57935e99b5d3c9b64d7c2cd2bc83183d4fee2ede79a6a45ee5",
+   "size": 6898207
+  },
+  "pavo_cristatus.tar.gz": {
+   "sha256": "1626b774deb6f083e7d2f17bd50514569bdcea452d3ae214300c100e64ab8b5c",
+   "size": 1825732
+  },
+  "pelodiscus_sinensis.tar.gz": {
+   "sha256": "7e3a3f30eb90922f5958f1cbe9ca32983201ce558e458aa30700ccbfb6f3d284",
+   "size": 6576535
+  },
+  "pelusios_castaneus.tar.gz": {
+   "sha256": "c28e457838731ef05acb6faa3b5df4c9abadf8277d9fcf28f1d8930a0f00f5fc",
+   "size": 1594925
+  },
+  "periophthalmus_magnuspinnatus.tar.gz": {
+   "sha256": "1b31117b31bc5bc22267abeefdc0b46a5949bb48ea3062dc781d7fcb2e7919ed",
+   "size": 1502479
+  },
+  "peromyscus_maniculatus_bairdii.tar.gz": {
+   "sha256": "40b77ff2c9225cdd87328d6a8f506f9b557e8e56bdb241893b7232bd54278e51",
+   "size": 5767175
+  },
+  "petromyzon_marinus.tar.gz": {
+   "sha256": "ab588b062141c2661351dce69855aeb84417cd588e2bdc8596a6b17b899ac68c",
+   "size": 1502798
+  },
+  "phascolarctos_cinereus.tar.gz": {
+   "sha256": "e9a9e7e17fca6d08597ee57e9ea03dddf5836fca0a2b7e3b91290ccca725e60f",
+   "size": 1502616
+  },
+  "phasianus_colchicus.tar.gz": {
+   "sha256": "6b9dbc4dd6332a6ae2730e345c3a4c0a5f9fe9b7ad4acc32931793b04b2340b1",
+   "size": 1893425
+  },
+  "phocoena_sinus.tar.gz": {
+   "sha256": "fdfc2097b229ac63ff26fb3745272438e6b12cf8b76be36b3ef5282971fbbd23",
+   "size": 7970993
+  },
+  "physeter_catodon.tar.gz": {
+   "sha256": "789c9b157dde911753b7bb91f58ce3c261bb017d75400aabf30af07f37dabeb2",
+   "size": 7946868
+  },
+  "piliocolobus_tephrosceles.tar.gz": {
+   "sha256": "77b90207a2d100aeebdeff4007198bddfc132c25e350c710ff4a1f51146dc074",
+   "size": 1978958
+  },
+  "podarcis_muralis.tar.gz": {
+   "sha256": "25a08aaecd3795af20960d9d293a943efaf63371200d9a1b593a435c276abc03",
+   "size": 5673008
+  },
+  "poecilia_formosa.tar.gz": {
+   "sha256": "2f9e8ee8b4eb4fe02ab5ee0d7713eed566f9560f7e6fdd3a1f43f64a6788696a",
+   "size": 6462864
+  },
+  "poecilia_latipinna.tar.gz": {
+   "sha256": "03a23817efb5c8e5fa4037c160ef7f483ce64219b985c821556c3840bb4ee711",
+   "size": 6015701
+  },
+  "poecilia_mexicana.tar.gz": {
+   "sha256": "b6c64cc1ba08e4001e336e292ac3afe4aeffb8599b92a68a935c072bad171552",
+   "size": 1958660
+  },
+  "poecilia_reticulata.tar.gz": {
+   "sha256": "f5c8a62e15fe3ce3495a578b0c25cd43093256dfb99526a079aadd00e9fdf3e9",
+   "size": 5291226
+  },
+  "pogona_vitticeps.tar.gz": {
+   "sha256": "ef8f9b04fa5223ebc7be977891f8b8982f567cf3b152a971a1a9e4191f991beb",
+   "size": 2095845
+  },
+  "pongo_abelii.tar.gz": {
+   "sha256": "21b8b302fc9bf3a649417379dcffcce0ed78107ad9c6af4cdb7a0607b70484d0",
+   "size": 16449949
+  },
+  "procavia_capensis.tar.gz": {
+   "sha256": "dc5131833ef66d3a3a360008b107a06c34db7809517e7232d19a4d9b43ea01ed",
+   "size": 12545580
+  },
+  "prolemur_simus.tar.gz": {
+   "sha256": "e403e0e1117e3756c4c11019ceac67b5708e1b01100d8a3271d981224de1dbd5",
+   "size": 15669527
+  },
+  "propithecus_coquereli.tar.gz": {
+   "sha256": "1eba1625eee0449f885bf7df64fae267761a36e1fa2c33cd13b986a54c256a0b",
+   "size": 15556130
+  },
+  "pseudonaja_textilis.tar.gz": {
+   "sha256": "66ab92417f8bd589142ba0fce31aede2470e3af80a471fd2992b6935e6ec8dc3",
+   "size": 5427614
+  },
+  "pteropus_vampyrus.tar.gz": {
+   "sha256": "7efe39aac334f0e627f2f6a38aa07d7d9c78f383326828c40d72a801fade4c10",
+   "size": 14264043
+  },
+  "pundamilia_nyererei.tar.gz": {
+   "sha256": "77cc485ab8452a1752b5178b6403090631c00351d73780f347c988c23d235fb6",
+   "size": 6593758
+  },
+  "pygocentrus_nattereri.tar.gz": {
+   "sha256": "e93c7c150279339ef90524cc92665e0367a7b8466e70c0612988628987c85dc7",
+   "size": 3380611
+  },
+  "rattus_norvegicus.tar.gz": {
+   "sha256": "e88aa2e3bee26c739ae8e325ee60243563a47c9d0d487a7e1c5829b21a387f48",
+   "size": 10543038
+  },
+  "rattus_norvegicus_shrspbbbutx.tar.gz": {
+   "sha256": "db582dc1ee349e1aaf447b1ce4cfd0d9cececa8e7a65e7ee480f7c2f3dde78f1",
+   "size": 1707324
+  },
+  "rattus_norvegicus_shrutx.tar.gz": {
+   "sha256": "620711e14bebdb31d2f9814fc996ccf489211bbf6b05e4e5de8e6d0a39616eaf",
+   "size": 1717190
+  },
+  "rattus_norvegicus_wkybbb.tar.gz": {
+   "sha256": "01e4137fd0a399c78d0c16bd2f0ee9dd2a4fa39c962c07bd604a02f4d7ffc86c",
+   "size": 1755198
+  },
+  "rhinolophus_ferrumequinum.tar.gz": {
+   "sha256": "e2b37428f94ed37f27cd74070f3781dc35fd895da4497ca738371d4c3553d1f8",
+   "size": 6114513
+  },
+  "rhinopithecus_bieti.tar.gz": {
+   "sha256": "6b7074dc238647d26ffae44289852ade8de73be5ff45ecc1c5ad0b5eb1d98f8e",
+   "size": 16936455
+  },
+  "rhinopithecus_roxellana.tar.gz": {
+   "sha256": "827e4fd43dd89bac755aa5c5b76db6b43e1c722478243d2d8ee058e219c19f47",
+   "size": 16475907
+  },
+  "saccharomyces_cerevisiae.tar.gz": {
+   "sha256": "41d7dc4174361813fe5341945d6c87a8626389cfe06ae599007ccbcb19187ff0",
+   "size": 1501120
+  },
+  "saimiri_boliviensis_boliviensis.tar.gz": {
+   "sha256": "a7580b5abf797b69d59011a789193897faed30cf4f9495b2fab6880eb0910a60",
+   "size": 16508085
+  },
+  "salarias_fasciatus.tar.gz": {
+   "sha256": "de72357997da4959aeeacb617884e0d745d07f11f0ad1158633745b8adde7b7c",
+   "size": 1670949
+  },
+  "salmo_salar.tar.gz": {
+   "sha256": "bc87f364eebb7640b55664c46ff22a0f3293d9a690afcf64aa9e875178c30710",
+   "size": 4404375
+  },
+  "salmo_trutta.tar.gz": {
+   "sha256": "c72a495541906002870a766d188c42ca644c6a67efa9b3bb3af23328a8cb2ce2",
+   "size": 2799305
+  },
+  "salvator_merianae.tar.gz": {
+   "sha256": "6a72110eaf53f3b012839f7410e0f76c73d39a8ce57fb95420cc85f2555062b8",
+   "size": 5632947
+  },
+  "sander_lucioperca.tar.gz": {
+   "sha256": "5502ca21de6d7ff0926b6c64355c672e68e9ebbcfd777bc33fefaebfa91887b5",
+   "size": 6802118
+  },
+  "sarcophilus_harrisii.tar.gz": {
+   "sha256": "b98a823415ac341b2342fd054b5381cf93d809f60a2a467ebe7c6be76c886cb6",
+   "size": 2013141
+  },
+  "sciurus_vulgaris.tar.gz": {
+   "sha256": "a3d3c81feda095d438fa1bb5c11d595528e02a5568a361796abdd92be97b3132",
+   "size": 4534010
+  },
+  "scleropages_formosus.tar.gz": {
+   "sha256": "b7bed936f1ce7d9792a399158451093989e8c5265542d750cce4c83b92cfac70",
+   "size": 2338039
+  },
+  "scophthalmus_maximus.tar.gz": {
+   "sha256": "ae2558dd488d3a451682b66620e1fe4f089ac42485f71e5ffabbf7ff770205b8",
+   "size": 6746453
+  },
+  "serinus_canaria.tar.gz": {
+   "sha256": "e9ce886ab6c0de3d5d7f1dda6e9368662a16d86381be388302ffcaab878c13a5",
+   "size": 6581392
+  },
+  "seriola_dumerili.tar.gz": {
+   "sha256": "3bdf6b546532f8038c9037cdf41ca5e9fac54dde4806df2cf532a7a2c4a1e1c6",
+   "size": 7304907
+  },
+  "seriola_lalandi_dorsalis.tar.gz": {
+   "sha256": "a6fc2563bb432fa0428d46da0e4cd7dcf8896094ebef64f725193276a976f80e",
+   "size": 6368642
+  },
+  "sinocyclocheilus_anshuiensis.tar.gz": {
+   "sha256": "bdb34db320c945ad895843e214a84c3446530b2bdcfb5b741276998a84463017",
+   "size": 2220230
+  },
+  "sinocyclocheilus_grahami.tar.gz": {
+   "sha256": "bcb9574e67b099f0b4b5fff5eaafb1946be7eef50a1e17073780051921f50274",
+   "size": 2837317
+  },
+  "sinocyclocheilus_rhinocerous.tar.gz": {
+   "sha256": "a371ba15b1f2f8ded6e1a652721fadbd8c74771bb17d56752da43f07f51434fd",
+   "size": 2254902
+  },
+  "sorex_araneus.tar.gz": {
+   "sha256": "ad9f84153498951810c074392d2d19e1d96a9a5d2377cacdd27a456bd53387d2",
+   "size": 10944612
+  },
+  "sparus_aurata.tar.gz": {
+   "sha256": "194d10fa63463ab22758219fe06d17bb8b9715a2a013675da23b4c0f13ed9634",
+   "size": 7610591
+  },
+  "spermophilus_dauricus.tar.gz": {
+   "sha256": "9fd13aee98656a6e0907d76ecc1abe7173b26c6871026d18a2365c04acc876c0",
+   "size": 1503169
+  },
+  "sphaeramia_orbicularis.tar.gz": {
+   "sha256": "9d365c515359e2ae04d8cc47374003fd5f7000dc2d407afa6dcde4e635618619",
+   "size": 1672610
+  },
+  "sphenodon_punctatus.tar.gz": {
+   "sha256": "13e4bd96f42876f6016c0ce462e04499bc2cc8720d51cee046e3ef936a9501b0",
+   "size": 6290555
+  },
+  "stachyris_ruficeps.tar.gz": {
+   "sha256": "88b99e9c61537b44a3a7b58581fc02abfcd603d12ddd9180173c181106435daa",
+   "size": 1621704
+  },
+  "stegastes_partitus.tar.gz": {
+   "sha256": "ca9744a50031997a185b3d35ea255053277edb4ed2bc21641ef5dad19ed60e08",
+   "size": 6609392
+  },
+  "strigops_habroptila.tar.gz": {
+   "sha256": "ea7472fba5c0cfd790377cc5b2c889ae12126f53757737149d7a0740532ae283",
+   "size": 6785065
+  },
+  "strix_occidentalis_caurina.tar.gz": {
+   "sha256": "6ab13685c532d0353c518f8f6cf226d6e9d1a9ac7a4d1407466a0692c444ef3a",
+   "size": 1633103
+  },
+  "struthio_camelus_australis.tar.gz": {
+   "sha256": "17bc0bbb258a57ee57f47667d81c7906fe02066c31c1211c21e72277f0303f6c",
+   "size": 8075407
+  },
+  "suricata_suricatta.tar.gz": {
+   "sha256": "7904edc93b1eec2e4e64424ef9aec37cd1b51edf586f696c93f22ee0122ef15b",
+   "size": 1930693
+  },
+  "sus_scrofa.tar.gz": {
+   "sha256": "34693a3ba7bca10058758433e2731517d417756b2d9c5d3a90525e34c6f175ec",
+   "size": 11624095
+  },
+  "sus_scrofa_bamei.tar.gz": {
+   "sha256": "f6049fe94a82605d330e41c3218e929cf5a92aad8d2672264cc3cc0b6406d618",
+   "size": 2066503
+  },
+  "sus_scrofa_berkshire.tar.gz": {
+   "sha256": "fedceb82dde62fe91ead35697936df63e8c6440374a0e5cd8cedc542b4468da0",
+   "size": 2164035
+  },
+  "sus_scrofa_hampshire.tar.gz": {
+   "sha256": "dd719610fd4bbcda41666fb22b06045676f781991b356eeda1a1df966b94f691",
+   "size": 2156749
+  },
+  "sus_scrofa_jinhua.tar.gz": {
+   "sha256": "928ae5b125b0a02b98326be3d9273f0e592ed735f987c89637481a9274b1bc17",
+   "size": 1941469
+  },
+  "sus_scrofa_landrace.tar.gz": {
+   "sha256": "c36dac3a3582722cf90ed77fa17e4603426f42118bc4a3bf2749380413188b8b",
+   "size": 2161035
+  },
+  "sus_scrofa_largewhite.tar.gz": {
+   "sha256": "8b75376ae7e8f74ae25496476c5a7880f85c96f48dc58a748697acf3111dcd57",
+   "size": 2150261
+  },
+  "sus_scrofa_meishan.tar.gz": {
+   "sha256": "8f6facea76573ff43dd771add66176f41d0f0736979fc028370cdf3e879168ac",
+   "size": 2134092
+  },
+  "sus_scrofa_pietrain.tar.gz": {
+   "sha256": "d1aca04ab2fee755d7281ceab1cab77f09337aaf805ee6f1fbc38119e0b2c925",
+   "size": 2162003
+  },
+  "sus_scrofa_rongchang.tar.gz": {
+   "sha256": "b34cf821f785114da046f0eafda963a51f44ec0ed150e621d817b4f9bf28e8ce",
+   "size": 2056876
+  },
+  "sus_scrofa_tibetan.tar.gz": {
+   "sha256": "920dbfb06b3cea3ece960c530d0edad722dbf8904641791985215c11bc795b8e",
+   "size": 2140359
+  },
+  "sus_scrofa_usmarc.tar.gz": {
+   "sha256": "1b969ff34a3f01537df708d27afd699f23cc567d200abf369ba861646c60041e",
+   "size": 2180713
+  },
+  "sus_scrofa_wuzhishan.tar.gz": {
+   "sha256": "72271cead5194866ac3f643e4f9cd2e7d56405c29f62e3a604eedefa541cfe35",
+   "size": 2127529
+  },
+  "taeniopygia_guttata.tar.gz": {
+   "sha256": "bb83ee4d08d6fca4daff33bac923ebad2a584041316e040752e984817427eae2",
+   "size": 6673234
+  },
+  "takifugu_rubripes.tar.gz": {
+   "sha256": "5127b368831ed29473d11a1094769599ed708854a7d86b9d723d909e0d18c832",
+   "size": 4055278
+  },
+  "terrapene_carolina_triunguis.tar.gz": {
+   "sha256": "9aae9f5ef376751d29b1abb8066998cc82846c7e8fefc0e4a8ddb8fda1643567",
+   "size": 6208874
+  },
+  "tetraodon_nigroviridis.tar.gz": {
+   "sha256": "78f838bb3d224856db764d321ad90bd1e6dd0a5d53e1f5f9cc05ba73dda7e5fa",
+   "size": 2924905
+  },
+  "theropithecus_gelada.tar.gz": {
+   "sha256": "bafc5f6841ede7a0f060209b163b1061e3392ebcf1243c2fa694e8f1fc268b57",
+   "size": 1848996
+  },
+  "tupaia_belangeri.tar.gz": {
+   "sha256": "2a81c55023ebefbc5804ce60bd8a6c08de35109c1c58656e80e2877bf603c1b9",
+   "size": 13310662
+  },
+  "tursiops_truncatus.tar.gz": {
+   "sha256": "5dfc664960799616a749e8a74d605b92a58893a00879a002cb062d6299b38162",
+   "size": 11947922
+  },
+  "urocitellus_parryii.tar.gz": {
+   "sha256": "d0a97ab81ef71e1de20f0b658987d684d33e0036280a0f6a27bf93c278c787cf",
+   "size": 15611799
+  },
+  "ursus_americanus.tar.gz": {
+   "sha256": "115ba10171b9357f13a81f014efdd6dd2295c11289ea78c70216b08d2d33354c",
+   "size": 11415425
+  },
+  "ursus_maritimus.tar.gz": {
+   "sha256": "ccfe3b0e3442f6ea179df1667ae9bdb19f6646fc6d0c47306c1e5f23f7d93400",
+   "size": 11903918
+  },
+  "ursus_thibetanus_thibetanus.tar.gz": {
+   "sha256": "b751109d44cff67c9ec60cc7be96b06c733ff1bb6ff7f76cbfb0cc4bfe302fe9",
+   "size": 1669226
+  },
+  "varanus_komodoensis.tar.gz": {
+   "sha256": "346c6bd3e5c7ce73a55f3db0b9b098c9c93f533793ffe179383c46436b4d7b53",
+   "size": 1737193
+  },
+  "vicugna_pacos.tar.gz": {
+   "sha256": "3102ea7aac210b88d9d6a11ab8f682496c44a1603e097e5ebe5f57da3f3adb88",
+   "size": 11556469
+  },
+  "vombatus_ursinus.tar.gz": {
+   "sha256": "cc7a7fea52dce45949d4ac80d9c803c315e5c1fe7b39314d3eaca464444b8ca0",
+   "size": 1889223
+  },
+  "vulpes_vulpes.tar.gz": {
+   "sha256": "889ecd06a0192b6a60caf27864285dc3a21369436d6e208249601fead769588c",
+   "size": 12032182
+  },
+  "xenopus_tropicalis.tar.gz": {
+   "sha256": "ee143c31f2dee99b53b0a234960544bf8d566396b6c540f95bfdad3df49f607d",
+   "size": 1505748
+  },
+  "xiphophorus_couchianus.tar.gz": {
+   "sha256": "7ecc5b5b8850d77f5dafabcc58cbcd3986a503a4711762f719584670fea1f879",
+   "size": 1502498
+  },
+  "xiphophorus_maculatus.tar.gz": {
+   "sha256": "048f9a037ffa68686a3433a29b15d0357667464cbe6460c87f13b96e3205f69d",
+   "size": 5995553
+  },
+  "zalophus_californianus.tar.gz": {
+   "sha256": "f3196e4e4d8445e28fc09592c2a0217378f87e8fc9ac83dc0ca2a62afb1136da",
+   "size": 1949290
+  },
+  "zonotrichia_albicollis.tar.gz": {
+   "sha256": "c3cd9ba747f38def222c482f91b906e81fd68df6c19364cb8e73c771d952dc7f",
+   "size": 1812801
+  },
+  "zosterops_lateralis_melanops.tar.gz": {
+   "sha256": "435bede21f0339663362f050189bf0b860620d8ad3c96f09de89377a0e7f1cf8",
+   "size": 1590785
+  }
+ }
+}

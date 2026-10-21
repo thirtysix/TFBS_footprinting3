@@ -24,6 +24,9 @@ Usage:
 
     # Batch upload for every species with an artifact on disk
     python hpc/publish_to_s3.py --species all
+
+After uploading, re-pin the checksums (hpc/build_data_manifest.py --only <species>.tar.gz) and
+release the package: clients refuse a tarball whose SHA-256 differs from the one they shipped with.
 """
 from __future__ import annotations
 

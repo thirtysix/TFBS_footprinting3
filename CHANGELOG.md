@@ -1,5 +1,22 @@
 # Changelog
 
+## Unreleased
+
+Downloaded species data is now verified before it is unpacked.
+
+- Every data tarball's SHA-256 is pinned in the package
+  (`tfbs_footprinter3/data/experimental_data_sha256.json`, built by
+  `hpc/build_data_manifest.py`). A download that does not match is deleted
+  and never extracted. The checksums ship with the release rather than
+  living in the bucket, so a write to the bucket alone cannot swap both a
+  tarball and its checksum.
+- Extraction refuses absolute paths, `..`, links and device files: Python's
+  `filter="data"` where available, the same checks by hand otherwise.
+  Before this a bare `extractall()` would unpack whatever the server sent.
+- A species published after a release has no pinned checksum and is
+  refused with a message to upgrade. `TFBS_FOOTPRINTER3_ALLOW_UNPINNED=1`
+  accepts it (a pinned tarball must still match).
+
 ## 0.1.5 — 2026-09-05
 
 Fixes a silent regression that disabled the eQTL evidence layer entirely.
